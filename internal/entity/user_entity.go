@@ -14,5 +14,8 @@ type User struct {
 	Password  string	`gorm:"size:255;not null"`
 	ConfirmPassword string `gorm:"-"`
 	
+	AccessToken  string `gorm:"-"`
+	RefreshToken string `gorm:"-"`
+	
 	Store 	  *Store 	`gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

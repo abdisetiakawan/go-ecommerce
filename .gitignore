@@ -1,3 +1,55 @@
 config.json
 go.sum
 .vscode/
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, build output
+*.test
+*.out
+
+# Output of the Go coverage tool, specifically when used with LiteIDE
+*.coverprofile
+
+# Editor backups
+*~
+
+# Dependency directories (vendor, Godeps)
+vendor/
+Godeps/
+
+# Environment specific files
+.env
+.env.*
+
+# IDE specific files
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# Logs and debug files
+*.log
+
+# Build directories
+bin/
+dist/
+_build/
+build/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Go module files
+go.sum
+
+# Generated files
+*.gen.go
+
+# Example: Specific to your project
+# Uncomment and modify if necessary
+# /path/to/generated_folder/

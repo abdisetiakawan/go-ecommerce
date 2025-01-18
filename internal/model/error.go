@@ -26,4 +26,5 @@ var (
     ErrNotFound          = NewApiError(fiber.StatusNotFound, "Resource not found")
     ErrConflict = NewApiError(fiber.StatusConflict, "Conflict")
     ErrUsernameExists = NewApiError(fiber.StatusConflict, "Username already exists")
+    ErrForbidden = NewApiError(fiber.StatusForbidden, "You are not allowed to access this resource")
 )

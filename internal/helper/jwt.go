@@ -13,6 +13,7 @@ type JwtHelper struct {
 }
 
 type AuthCustomClaims struct {
+    ID uint `json:"id"`
     Name  string `json:"name"`
     Username string `json:"username"`
     Role  string `json:"role"`
@@ -31,6 +32,7 @@ func (h *JwtHelper) GenerateTokenUser(user model.AuthResponse) (string, string, 
     accessSecret := h.config.GetString("credentials.accesssecret")
 
     accessTokenClaims := &AuthCustomClaims{
+        ID: user.ID,
         Name:  user.Name,
         Email: user.Email,
         Username: user.Username,
@@ -42,6 +44,7 @@ func (h *JwtHelper) GenerateTokenUser(user model.AuthResponse) (string, string, 
     }
 
     refreshTokenClaims := &AuthCustomClaims{
+        ID: user.ID,
         Name:  user.Name,
         Email: user.Email,
         Username: user.Username,

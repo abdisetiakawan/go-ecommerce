@@ -16,15 +16,15 @@ type StoreUseCase struct {
 	DB              *gorm.DB
 	Log             *logrus.Logger
 	Validate        *validator.Validate
-	StoreRepository *repository.StoreRepository
+	SellerRepository *repository.SellerRepository
 }
 
-func NewStoreUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, storeRepos *repository.StoreRepository) *StoreUseCase {
+func NewSellerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, storeRepos *repository.SellerRepository) *StoreUseCase {
 	return &StoreUseCase{
 		DB:              db,
 		Log:             log,
 		Validate:        validate,
-		StoreRepository: storeRepos,
+		SellerRepository: storeRepos,
 	}
 }
 
@@ -36,13 +36,23 @@ func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore)
 		u.Log.Warnf("Failed to validate request body: %+v", err)
 		return nil, err
 	}
-
+	// check if seller has a store
+    hasStore, err := u.SellerRepository.HasStore(tx, request.ID)
+    if err != nil {
+        u.Log.Warnf("Failed to check if seller has store: %+v", err)
+        return nil, model.ErrInternalServer
+    }
+    if hasStore {
+        u.Log.Warnf("Seller already has a store")
+        return nil, model.ErrConflict
+    }
 	store := &entity.Store{
+		UserID: request.ID,
 		StoreName: request.StoreName,
 		Description: request.Description,
 	}
 	
-	if err := u.StoreRepository.Create(tx, store); err != nil {
+	if err := u.SellerRepository.Create(tx, store); err != nil {
 		u.Log.Warnf("Failed to create store: %+v", err)
 		return nil, err
 	}

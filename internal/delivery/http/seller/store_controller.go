@@ -1,26 +1,29 @@
 package seller
 
 import (
+	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 )
 
-type StoreController struct {
+type SellerController struct {
 	UseCase *usecase.StoreUseCase
 	Logger  *logrus.Logger
 }
 
-func NewStoreController(usecase *usecase.StoreUseCase, logger *logrus.Logger) *StoreController {
-	return &StoreController{
+func NewSellerController(usecase *usecase.StoreUseCase, logger *logrus.Logger) *SellerController {
+	return &SellerController{
 		UseCase: usecase,
 		Logger:  logger,
 	}
 }
 
-func (c *StoreController) RegisterStore(ctx *fiber.Ctx) error {
+func (c *SellerController) RegisterStore(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
 	request := new(model.RegisterStore)
+	request.ID = authID.ID
 	if err := ctx.BodyParser(request); err != nil {
 		c.Logger.Warnf("Failed to parse request body: %+v", err)
 		return err

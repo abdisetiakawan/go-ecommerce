@@ -14,6 +14,7 @@ type LoginUser struct {
 }
 
 type AuthResponse struct {
+	ID           uint `json:"id"`
 	UserUUID     string `json:"user_uuid"`
 	Username     string `json:"username"`
 	Name         string `json:"name"`

@@ -7,6 +7,7 @@ import (
 
 func AuthToResponse(user *entity.User) *model.AuthResponse {
 	return &model.AuthResponse{
+		ID:          user.ID,
 		UserUUID:    user.UserUUID,
 		Username:    user.Username,
 		Name:        user.Name,

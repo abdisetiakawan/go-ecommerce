@@ -70,8 +70,23 @@ func (c *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 		return nil, model.ErrInternalServer
 	}
 
+	user := &entity.User{
+		UserUUID: c.UUIDHelper.Value,
+		Username: request.Username,
+		Name: request.Name,
+		Email: request.Email,
+		Role: request.Role,
+		Password: string(password),
+	}
+
+	if err := c.AuthRepository.Create(tx, user); err != nil {
+		c.Log.Warnf("Failed to create user: %+v", err)
+		return nil, err
+	}
+	
 	// generate token
 	accessToken, refreshToken, err := c.Jwt.GenerateTokenUser(model.AuthResponse{
+		ID: user.ID,
 		Name: request.Name,
 		Username: request.Username,
 		Role: request.Role,
@@ -82,26 +97,13 @@ func (c *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 		return nil, model.ErrInternalServer
 	}
 
-	user := &entity.User{
-		UserUUID: c.UUIDHelper.Value,
-		Username: request.Username,
-		Name: request.Name,
-		Email: request.Email,
-		Role: request.Role,
-		Password: string(password),
-		AccessToken: accessToken,
-		RefreshToken: refreshToken,
-	}
-
-	if err := c.AuthRepository.Create(tx, user); err != nil {
-		c.Log.Warnf("Failed to create user: %+v", err)
-		return nil, err
-	}
-
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, err
 	}
+
+	user.AccessToken = accessToken
+	user.RefreshToken = refreshToken
 
 	return converter.AuthToResponse(user), nil
 }
@@ -131,6 +133,7 @@ func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*mod
 
 	// generate token
 	accessToken, refreshToken, err := c.Jwt.GenerateTokenUser(model.AuthResponse{
+		ID: user.ID,
 		Name: user.Name,
 		Username: user.Username,
 		Role: user.Role,

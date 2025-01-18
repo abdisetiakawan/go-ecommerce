@@ -1,7 +1,7 @@
 package model
 
 type Auth struct {
-	ID    string
+	ID    uint
 	Email string
 	Role  string
 }

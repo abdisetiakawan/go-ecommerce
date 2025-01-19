@@ -27,4 +27,5 @@ var (
     ErrConflict = NewApiError(fiber.StatusConflict, "Conflict")
     ErrUsernameExists = NewApiError(fiber.StatusConflict, "Username already exists")
     ErrForbidden = NewApiError(fiber.StatusForbidden, "You are not allowed to access this resource")
+    ErrPasswordNotMatch = NewApiError(fiber.StatusBadRequest, "Password and confirm password do not match")
 )

@@ -6,6 +6,7 @@ type RegisterUser struct {
 	Email    string `json:"email" validate:"required,email"`
 	Role     string `json:"role" validate:"required,oneof=seller buyer"`
 	Password string `json:"password" validate:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" validate:"required,min=8"`
 }
 
 type LoginUser struct {

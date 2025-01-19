@@ -62,7 +62,10 @@ func (c *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 		c.Log.Warnf("Username already exists")
 		return nil, model.ErrUsernameExists
 	}
-
+	if request.Password != request.ConfirmPassword {
+		c.Log.Warnf("Password and confirm password do not match")
+		return nil, model.ErrPasswordNotMatch
+	}
 	// hash password
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {

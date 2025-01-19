@@ -35,9 +35,6 @@ func NewAuthUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 }
 
 func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (*model.AuthResponse, error) {
-	tx := u.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
-
     if err := u.Validate.Struct(request); err != nil {
         if validationErrors, ok := err.(validator.ValidationErrors); ok {
             u.Log.Warnf("Validation failed: %+v", validationErrors)
@@ -49,7 +46,7 @@ func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
     }
 
 	// validate if email or username already exists
-	total, err := u.AuthRepository.CountByField(tx, "email", request.Email)
+	total, err := u.AuthRepository.CountByField(u.DB, "email", request.Email)
 	if err != nil {
 		u.Log.Warnf("Failed to check email: %+v", err)
 		return nil, err
@@ -58,7 +55,7 @@ func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 		u.Log.Warnf("Email already exists")
 		return nil, model.ErrUserAlreadyExists
 	}
-	ttl, err := u.AuthRepository.CountByField(tx, "username", request.Username)
+	ttl, err := u.AuthRepository.CountByField(u.DB, "username", request.Username)
 	if err != nil {
 		u.Log.Warnf("Failed to check username: %+v", err)
 		return nil, err
@@ -87,7 +84,7 @@ func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 		Password: string(password),
 	}
 
-	if err := u.AuthRepository.Create(tx, user); err != nil {
+	if err := u.AuthRepository.Create(u.DB, user); err != nil {
 		u.Log.Warnf("Failed to create user: %+v", err)
 		return nil, err
 	}
@@ -105,11 +102,6 @@ func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 		return nil, model.ErrInternalServer
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		u.Log.Warnf("Failed to commit transaction: %+v", err)
-		return nil, err
-	}
-
 	user.AccessToken = accessToken
 	user.RefreshToken = refreshToken
 
@@ -117,9 +109,6 @@ func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 }
 
 func (u *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*model.AuthResponse, error) {
-	tx := u.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
-
     if err := u.Validate.Struct(request); err != nil {
         if validationErrors, ok := err.(validator.ValidationErrors); ok {
             u.Log.Warnf("Validation failed: %+v", validationErrors)
@@ -132,7 +121,7 @@ func (u *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*mod
 
 	// validate email
 	user := new(entity.User)
-    err := u.AuthRepository.FindByEmail(tx, user, request.Email)
+    err := u.AuthRepository.FindByEmail(u.DB, user, request.Email)
     if err != nil {
         u.Log.Warnf("Failed to find user : %+v", err)
         return nil, model.ErrInvalidCredentials
@@ -159,12 +148,6 @@ func (u *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*mod
 
 	user.AccessToken = accessToken
 	user.RefreshToken = refreshToken
-
-	err = tx.Commit().Error
-	if err != nil {
-		u.Log.Warnf("Failed to commit transaction: %+v", err)
-		return nil, err
-	}
 
 	return converter.AuthToResponse(user), nil
 }

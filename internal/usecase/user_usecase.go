@@ -30,9 +30,6 @@ func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 }
 
 func (u *UserUseCase) Create(ctx context.Context, request *model.CreateProfile) (*model.ProfileResponse, error) {
-	tx := u.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
-
     if err := u.Validate.Struct(request); err != nil {
         if validationErrors, ok := err.(validator.ValidationErrors); ok {
             u.Log.Warnf("Validation failed: %+v", validationErrors)
@@ -51,7 +48,7 @@ func (u *UserUseCase) Create(ctx context.Context, request *model.CreateProfile) 
 		Avatar: request.Avatar,
 		Bio: request.Bio,
 	}
-	hasProfile, err := u.UserRepository.HasUserID(tx, request.UserID)
+	hasProfile, err := u.UserRepository.HasUserID(u.DB, request.UserID)
 	if err != nil {
 		u.Log.Warnf("Failed to check if user has profile: %+v", err)
 		return nil, err
@@ -61,13 +58,8 @@ func (u *UserUseCase) Create(ctx context.Context, request *model.CreateProfile) 
 		return nil, model.ErrConflict
 	}
 
-	if err := u.UserRepository.Create(tx, profile); err != nil {
+	if err := u.UserRepository.Create(u.DB, profile); err != nil {
 		u.Log.Warnf("Failed to create profile: %+v", err)
-		return nil, err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		u.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, err
 	}
 

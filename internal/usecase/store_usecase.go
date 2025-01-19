@@ -30,9 +30,6 @@ func NewSellerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valid
 }
 
 func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore) (*model.StoreResponse, error) {
-	tx := u.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
-
     if err := u.Validate.Struct(request); err != nil {
         if validationErrors, ok := err.(validator.ValidationErrors); ok {
             u.Log.Warnf("Validation failed: %+v", validationErrors)
@@ -43,7 +40,7 @@ func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore)
         return nil, model.ErrBadRequest
     }
 	// check if seller has a store
-    hasStore, err := u.SellerRepository.HasStore(tx, request.ID)
+    hasStore, err := u.SellerRepository.HasStore(u.DB, request.ID)
     if err != nil {
         u.Log.Warnf("Failed to check if seller has store: %+v", err)
         return nil, model.ErrInternalServer
@@ -58,13 +55,8 @@ func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore)
 		Description: request.Description,
 	}
 	
-	if err := u.SellerRepository.Create(tx, store); err != nil {
+	if err := u.SellerRepository.Create(u.DB, store); err != nil {
 		u.Log.Warnf("Failed to create store: %+v", err)
-		return nil, err
-	}
-	
-	if err := tx.Commit().Error; err != nil {
-		u.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, err
 	}
 	

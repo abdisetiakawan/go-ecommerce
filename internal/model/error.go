@@ -30,6 +30,7 @@ var (
     ErrUsernameExists     = NewApiError(fiber.StatusConflict, "Username already exists", nil)
     ErrForbidden          = NewApiError(fiber.StatusForbidden, "You are not allowed to access this resource", nil)
     ErrPasswordNotMatch   = NewApiError(fiber.StatusBadRequest, "Password and confirm password do not match", nil)
+    ErrStoreNotFound      = NewApiError(fiber.StatusNotFound, "Store not found", nil)
 )
 
 func ErrValidationFailed(errors interface{}) *ApiError {

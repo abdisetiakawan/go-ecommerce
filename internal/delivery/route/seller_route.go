@@ -10,4 +10,5 @@ func SetupSellerRoute(r *RouteConfig, app *fiber.App, sellerController *seller.S
 	app.Use(r.AuthMiddleware)
 	app.Use(middleware.SellerOnly())
 	app.Post("/api/seller/register", sellerController.RegisterStore)
+	app.Post("/api/seller/products", sellerController.RegisterProduct)
 }

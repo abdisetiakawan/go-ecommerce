@@ -35,3 +35,19 @@ func (c *SellerController) RegisterStore(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully registered store", fiber.StatusCreated, nil, nil))
 }
+
+func (c *SellerController) RegisterProduct(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	request := new(model.RegisterProduct)
+	request.AuthID = authID.ID
+	if err := ctx.BodyParser(request); err != nil {
+		c.Logger.Warnf("Failed to parse request body: %+v", err)
+		return err
+	}
+	response, err := c.UseCase.CreateProduct(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to register product: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully registered product", fiber.StatusCreated, nil, nil))
+}

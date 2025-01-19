@@ -18,14 +18,16 @@ type StoreUseCase struct {
 	Log             *logrus.Logger
 	Validate        *validator.Validate
 	SellerRepository *repository.SellerRepository
+	UUIDHelper *helper.UUIDHelper
 }
 
-func NewSellerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, storeRepos *repository.SellerRepository) *StoreUseCase {
+func NewSellerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, sellerRepos *repository.SellerRepository, uuid *helper.UUIDHelper) *StoreUseCase {
 	return &StoreUseCase{
 		DB:              db,
 		Log:             log,
 		Validate:        validate,
-		SellerRepository: storeRepos,
+		SellerRepository: sellerRepos,
+		UUIDHelper: uuid,
 	}
 }
 
@@ -55,10 +57,47 @@ func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore)
 		Description: request.Description,
 	}
 	
-	if err := u.SellerRepository.Create(u.DB, store); err != nil {
+	if err := u.SellerRepository.StoreRepository.Create(u.DB, store); err != nil {
 		u.Log.Warnf("Failed to create store: %+v", err)
 		return nil, err
 	}
 	
 	return converter.StoreToResponse(store), nil
+}
+
+func (u *StoreUseCase) CreateProduct(ctx context.Context, request *model.RegisterProduct) (*model.ProductResponse, error) {
+	if err := u.Validate.Struct(request); err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			u.Log.Warnf("Validation failed: %+v", validationErrors)
+			formattedErrors := helper.FormatValidationErrors(validationErrors)
+			return nil, model.ErrValidationFailed(formattedErrors)
+		}
+		u.Log.Warnf("Failed to validate request body: %+v", err)
+		return nil, model.ErrBadRequest
+	}
+	// check if seller has a store
+	var store entity.Store
+	if err := u.SellerRepository.CheckStore(u.DB, &store, request.AuthID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Store not found")
+			return nil, model.ErrStoreNotFound
+		}
+		u.Log.Warnf("Failed to check store: %+v", err)
+		return nil, model.ErrInternalServer
+	}
+	product := &entity.Product{
+		ProductUUID: u.UUIDHelper.Generate(),
+		StoreID: store.ID,
+		ProductName: request.ProductName,
+		Description: request.Description,
+		Price: request.Price,
+		Stock: request.Stock,
+		Category: request.Category,
+	}
+	if err := u.SellerRepository.ProductRepository.Create(u.DB, product); err != nil {
+		u.Log.Warnf("Failed to create product: %+v", err)
+		return nil, err
+	}
+
+	return converter.ProductToResponse(product), nil
 }

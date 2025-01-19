@@ -2,10 +2,12 @@ package helper
 
 import "github.com/google/uuid"
 
+type UUIDHelper struct{}
 
-type UUIDHelper struct {
-	Value string
-}
 func NewUUIDHelper() *UUIDHelper {
-	return &UUIDHelper{Value: uuid.New().String()}
+    return &UUIDHelper{}
+}
+
+func (u *UUIDHelper) Generate() string {
+    return uuid.New().String()
 }

@@ -4,8 +4,8 @@ import "gorm.io/gorm"
 
 type Store struct {
 	gorm.Model
-	UserID 		uint 	`gorm:"not null"`
-	User 		User 	`gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	StoreName 	string 	`gorm:"constraint:OnUpdate:CASCADE,OnDelete:Cascade;"`
-	Description string 	`gorm:"type:text"`
+	UserID      uint   `gorm:"not null"`
+	User        User   `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	StoreName   string `gorm:"size:255;not null"`
+	Description string `gorm:"type:text"`
 }

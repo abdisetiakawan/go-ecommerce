@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
+	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
@@ -32,10 +33,15 @@ func (u *UserUseCase) Create(ctx context.Context, request *model.CreateProfile) 
 	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	if err := u.Validate.Struct(request); err != nil {
-		u.Log.Warnf("Failed to validate request body: %+v", err)
-		return nil, err
-	}
+    if err := u.Validate.Struct(request); err != nil {
+        if validationErrors, ok := err.(validator.ValidationErrors); ok {
+            u.Log.Warnf("Validation failed: %+v", validationErrors)
+            formattedErrors := helper.FormatValidationErrors(validationErrors)
+            return nil, model.ErrValidationFailed(formattedErrors)
+        }
+        u.Log.Warnf("Failed to validate request body: %+v", err)
+        return nil, model.ErrBadRequest
+    }
 
 	profile := &entity.Profile{
 		UserID: request.UserID,

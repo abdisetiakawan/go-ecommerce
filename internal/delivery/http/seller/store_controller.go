@@ -33,5 +33,5 @@ func (c *SellerController) RegisterStore(ctx *fiber.Ctx) error {
 		c.Logger.Warnf("Failed to register store: %+v", err)
 		return err
 	}
-	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully registered store", fiber.StatusCreated, nil))
+	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully registered store", fiber.StatusCreated, nil, nil))
 }

@@ -30,7 +30,7 @@ func (c *AuthController) Register(ctx *fiber.Ctx) error {
 		c.Logger.Warnf("Failed to register user : %+v", err)
 		return err
 	}
-	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully registered user", fiber.StatusCreated, nil))
+	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully registered user", fiber.StatusCreated, nil, nil))
 }
 
 func (c *AuthController) Login(ctx *fiber.Ctx) error {
@@ -44,5 +44,5 @@ func (c *AuthController) Login(ctx *fiber.Ctx) error {
 		c.Logger.Warnf("Failed to login user : %+v", err)
 		return err
 	}
-	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully logged in user", fiber.StatusOK, nil))
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully logged in user", fiber.StatusOK, nil, nil))
 }

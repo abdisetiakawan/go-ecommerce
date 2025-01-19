@@ -34,47 +34,52 @@ func NewAuthUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 	}
 }
 
-func (c *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (*model.AuthResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (*model.AuthResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Failed to validate request body: %+v", err)
-		return nil, err
-	}
+    if err := u.Validate.Struct(request); err != nil {
+        if validationErrors, ok := err.(validator.ValidationErrors); ok {
+            u.Log.Warnf("Validation failed: %+v", validationErrors)
+            formattedErrors := helper.FormatValidationErrors(validationErrors)
+            return nil, model.ErrValidationFailed(formattedErrors)
+        }
+        u.Log.Warnf("Failed to validate request body: %+v", err)
+        return nil, model.ErrBadRequest
+    }
 
 	// validate if email or username already exists
-	total, err := c.AuthRepository.CountByField(tx, "email", request.Email)
+	total, err := u.AuthRepository.CountByField(tx, "email", request.Email)
 	if err != nil {
-		c.Log.Warnf("Failed to check email: %+v", err)
+		u.Log.Warnf("Failed to check email: %+v", err)
 		return nil, err
 	}
 	if total > 0 {
-		c.Log.Warnf("Email already exists")
+		u.Log.Warnf("Email already exists")
 		return nil, model.ErrUserAlreadyExists
 	}
-	ttl, err := c.AuthRepository.CountByField(tx, "username", request.Username)
+	ttl, err := u.AuthRepository.CountByField(tx, "username", request.Username)
 	if err != nil {
-		c.Log.Warnf("Failed to check username: %+v", err)
+		u.Log.Warnf("Failed to check username: %+v", err)
 		return nil, err
 	}
 	if ttl > 0 {
-		c.Log.Warnf("Username already exists")
+		u.Log.Warnf("Username already exists")
 		return nil, model.ErrUsernameExists
 	}
 	if request.Password != request.ConfirmPassword {
-		c.Log.Warnf("Password and confirm password do not match")
+		u.Log.Warnf("Password and confirm password do not match")
 		return nil, model.ErrPasswordNotMatch
 	}
 	// hash password
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.Log.Warnf("Failed to hash password: %+v", err)
+		u.Log.Warnf("Failed to hash password: %+v", err)
 		return nil, model.ErrInternalServer
 	}
 
 	user := &entity.User{
-		UserUUID: c.UUIDHelper.Value,
+		UserUUID: u.UUIDHelper.Value,
 		Username: request.Username,
 		Name: request.Name,
 		Email: request.Email,
@@ -82,13 +87,13 @@ func (c *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 		Password: string(password),
 	}
 
-	if err := c.AuthRepository.Create(tx, user); err != nil {
-		c.Log.Warnf("Failed to create user: %+v", err)
+	if err := u.AuthRepository.Create(tx, user); err != nil {
+		u.Log.Warnf("Failed to create user: %+v", err)
 		return nil, err
 	}
 	
 	// generate token
-	accessToken, refreshToken, err := c.Jwt.GenerateTokenUser(model.AuthResponse{
+	accessToken, refreshToken, err := u.Jwt.GenerateTokenUser(model.AuthResponse{
 		ID: user.ID,
 		Name: request.Name,
 		Username: request.Username,
@@ -96,12 +101,12 @@ func (c *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 		Email: request.Email,
 	})
 	if err != nil {
-		c.Log.Warnf("Failed to generate token: %+v", err)
+		u.Log.Warnf("Failed to generate token: %+v", err)
 		return nil, model.ErrInternalServer
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction: %+v", err)
+		u.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, err
 	}
 
@@ -111,31 +116,36 @@ func (c *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 	return converter.AuthToResponse(user), nil
 }
 
-func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*model.AuthResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (u *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*model.AuthResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Failed to validate request body: %+v", err)
-		return nil, model.ErrBadRequest
-	}
+    if err := u.Validate.Struct(request); err != nil {
+        if validationErrors, ok := err.(validator.ValidationErrors); ok {
+            u.Log.Warnf("Validation failed: %+v", validationErrors)
+            formattedErrors := helper.FormatValidationErrors(validationErrors)
+            return nil, model.ErrValidationFailed(formattedErrors)
+        }
+        u.Log.Warnf("Failed to validate request body: %+v", err)
+        return nil, model.ErrBadRequest
+    }
 
 	// validate email
 	user := new(entity.User)
-    err := c.AuthRepository.FindByEmail(tx, user, request.Email)
+    err := u.AuthRepository.FindByEmail(tx, user, request.Email)
     if err != nil {
-        c.Log.Warnf("Failed to find user : %+v", err)
+        u.Log.Warnf("Failed to find user : %+v", err)
         return nil, model.ErrInvalidCredentials
     }
 
 	// validate password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
-		c.Log.Warnf("Failed to compare password: %+v", err)
+		u.Log.Warnf("Failed to compare password: %+v", err)
 		return nil, model.ErrInvalidCredentials
 	}
 
 	// generate token
-	accessToken, refreshToken, err := c.Jwt.GenerateTokenUser(model.AuthResponse{
+	accessToken, refreshToken, err := u.Jwt.GenerateTokenUser(model.AuthResponse{
 		ID: user.ID,
 		Name: user.Name,
 		Username: user.Username,
@@ -143,7 +153,7 @@ func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*mod
 		Email: user.Email,
 	})
 	if err != nil {
-		c.Log.Warnf("Failed to generate token: %+v", err)
+		u.Log.Warnf("Failed to generate token: %+v", err)
 		return nil, model.ErrInternalServer
 	}
 
@@ -152,7 +162,7 @@ func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*mod
 
 	err = tx.Commit().Error
 	if err != nil {
-		c.Log.Warnf("Failed to commit transaction: %+v", err)
+		u.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, err
 	}
 

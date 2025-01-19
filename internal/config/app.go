@@ -4,6 +4,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/seller"
+	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/user"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/route"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
@@ -34,11 +35,16 @@ func Bootstrap(config *BootstrapConfig) {
 	sellerUseCase := usecase.NewSellerUseCase(config.DB, config.Log, config.Validate, sellerRepository)
 	sellerController := seller.NewSellerController(sellerUseCase, config.Log)
 
+	userRepository := repository.NewUserRepository(config.Log)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository)
+	userController := user.NewUserController(userUseCase, config.Log)
+	
 	AuthMiddleware := middleware.NewAuth(config.Config)
 	routeConfig := &route.RouteConfig{
 		App: config.App,
 		AuthController: authController,
 		SellerController: sellerController,
+		UserController: userController,
 		AuthMiddleware: AuthMiddleware,
 	}
 	routeConfig.Setup()

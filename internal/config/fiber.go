@@ -20,17 +20,22 @@ func NewErrorHandler() fiber.ErrorHandler {
     return func(ctx *fiber.Ctx, err error) error {
         code := fiber.StatusInternalServerError
         message := err.Error()
+        var errors interface{}
 
         switch e := err.(type) {
         case *model.ApiError:
             code = e.StatusCode
             message = e.Message
+            errors = e.Errors
         case *fiber.Error:
             code = e.Code
             message = e.Message
         }
+
         return ctx.Status(code).JSON(fiber.Map{
-            "errors": message,
+            "status":  "fail",
+            "message": message,
+            "errors":  errors,
         })
     }
 }

@@ -19,3 +19,9 @@ func (r *Repository[T]) Create(db *gorm.DB, entity *T) error {
 func (r *Repository[T]) FindByEmail(db *gorm.DB, entity *T, email string) error {
 	return db.Where("email = ?", email).Take(entity).Error
 }
+
+func (r *Repository[T]) HasUserID(db *gorm.DB, userID uint) (bool, error) {
+	var count int64
+	err := db.Model(new(T)).Where("user_id = ?", userID).Count(&count).Error
+	return count > 0, err
+}

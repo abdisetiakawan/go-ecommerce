@@ -17,5 +17,5 @@ type User struct {
 	AccessToken  string `gorm:"-"`
 	RefreshToken string `gorm:"-"`
 	
-	Store 	  *Store 	`gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Store *Store `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

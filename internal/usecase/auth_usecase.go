@@ -76,7 +76,7 @@ func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 	}
 
 	user := &entity.User{
-		UserUUID: u.UUIDHelper.Value,
+		UserUUID: u.UUIDHelper.Generate(),
 		Username: request.Username,
 		Name: request.Name,
 		Email: request.Email,

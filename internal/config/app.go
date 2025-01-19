@@ -31,8 +31,8 @@ func Bootstrap(config *BootstrapConfig) {
 	authUseCase := usecase.NewAuthUseCase(config.DB, config.Log, config.Validate, authRepository, config.Jwt, config.UserUUID)
 	authController := http.NewAuthController(authUseCase, config.Log)
 
-	sellerRepository := repository.NewSellerRepository(config.Log)
-	sellerUseCase := usecase.NewSellerUseCase(config.DB, config.Log, config.Validate, sellerRepository)
+	sellerRepository := repository.NewSellerRepository(config.Log, config.DB)
+	sellerUseCase := usecase.NewSellerUseCase(config.DB, config.Log, config.Validate, sellerRepository, config.UserUUID)
 	sellerController := seller.NewSellerController(sellerUseCase, config.Log)
 
 	userRepository := repository.NewUserRepository(config.Log)

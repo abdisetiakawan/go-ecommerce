@@ -12,4 +12,6 @@ type Product struct {
 	Price       float64 `gorm:"not null"`
 	Stock       int     `gorm:"not null"`
 	Category    string  `gorm:"type:enum('clothes', 'electronics', 'accessories');not null"`
+
+	OrderItems []OrderItem `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

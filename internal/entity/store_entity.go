@@ -8,4 +8,5 @@ type Store struct {
 	User        User   `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	StoreName   string `gorm:"size:255;not null"`
 	Description string `gorm:"type:text"`
+	Products []Product `gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

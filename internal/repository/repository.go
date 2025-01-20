@@ -39,7 +39,7 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 }
 
 func (r *Repository[T]) Delete(db *gorm.DB, id uint) error {
-	return db.Delete(new(T), id).Error
+    return db.Unscoped().Delete(new(T), id).Error
 }
 
 func (r *Repository[T]) FindAll(db *gorm.DB, entities *[]T, limit, offset int) error {

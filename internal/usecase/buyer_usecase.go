@@ -37,15 +37,10 @@ func (u *BuyerUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder
     tx := u.DB.WithContext(ctx).Begin()
     defer tx.Rollback()
 
-    if err := u.Validate.Struct(input); err != nil {
-        if validationErrors, ok := err.(validator.ValidationErrors); ok {
-            u.Log.Warnf("Validation failed: %+v", validationErrors)
-            formattedErrors := helper.FormatValidationErrors(validationErrors)
-            return nil, model.ErrValidationFailed(formattedErrors)
-        }
-        u.Log.Warnf("Failed to validate request body: %+v", err)
-        return nil, model.ErrBadRequest
-    }
+	if err := helper.ValidateStruct(u.Validate, u.Log, input); err != nil {
+		return nil, err
+	}
+
 
     var totalPrice float64
     var orderItems []entity.OrderItem

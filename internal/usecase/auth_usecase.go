@@ -35,15 +35,9 @@ func NewAuthUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 }
 
 func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (*model.AuthResponse, error) {
-    if err := u.Validate.Struct(request); err != nil {
-        if validationErrors, ok := err.(validator.ValidationErrors); ok {
-            u.Log.Warnf("Validation failed: %+v", validationErrors)
-            formattedErrors := helper.FormatValidationErrors(validationErrors)
-            return nil, model.ErrValidationFailed(formattedErrors)
-        }
-        u.Log.Warnf("Failed to validate request body: %+v", err)
-        return nil, model.ErrBadRequest
-    }
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
 
 	// validate if email or username already exists
 	total, err := u.AuthRepository.CountByField(u.DB, "email", request.Email)
@@ -109,15 +103,10 @@ func (u *AuthUseCase) Create(ctx context.Context, request *model.RegisterUser) (
 }
 
 func (u *AuthUseCase) Login(ctx context.Context, request *model.LoginUser) (*model.AuthResponse, error) {
-    if err := u.Validate.Struct(request); err != nil {
-        if validationErrors, ok := err.(validator.ValidationErrors); ok {
-            u.Log.Warnf("Validation failed: %+v", validationErrors)
-            formattedErrors := helper.FormatValidationErrors(validationErrors)
-            return nil, model.ErrValidationFailed(formattedErrors)
-        }
-        u.Log.Warnf("Failed to validate request body: %+v", err)
-        return nil, model.ErrBadRequest
-    }
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
+
 
 	// validate email
 	user := new(entity.User)

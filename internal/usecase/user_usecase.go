@@ -30,15 +30,9 @@ func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 }
 
 func (u *UserUseCase) Create(ctx context.Context, request *model.CreateProfile) (*model.ProfileResponse, error) {
-    if err := u.Validate.Struct(request); err != nil {
-        if validationErrors, ok := err.(validator.ValidationErrors); ok {
-            u.Log.Warnf("Validation failed: %+v", validationErrors)
-            formattedErrors := helper.FormatValidationErrors(validationErrors)
-            return nil, model.ErrValidationFailed(formattedErrors)
-        }
-        u.Log.Warnf("Failed to validate request body: %+v", err)
-        return nil, model.ErrBadRequest
-    }
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
 
 	profile := &entity.Profile{
 		UserID: request.UserID,

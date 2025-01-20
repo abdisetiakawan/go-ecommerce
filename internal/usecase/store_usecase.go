@@ -32,15 +32,9 @@ func NewSellerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valid
 }
 
 func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore) (*model.StoreResponse, error) {
-    if err := u.Validate.Struct(request); err != nil {
-        if validationErrors, ok := err.(validator.ValidationErrors); ok {
-            u.Log.Warnf("Validation failed: %+v", validationErrors)
-            formattedErrors := helper.FormatValidationErrors(validationErrors)
-            return nil, model.ErrValidationFailed(formattedErrors)
-        }
-        u.Log.Warnf("Failed to validate request body: %+v", err)
-        return nil, model.ErrBadRequest
-    }
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
 	// check if seller has a store
     hasStore, err := u.SellerRepository.HasStore(u.DB, request.ID)
     if err != nil {
@@ -66,14 +60,8 @@ func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore)
 }
 
 func (u *StoreUseCase) CreateProduct(ctx context.Context, request *model.RegisterProduct) (*model.ProductResponse, error) {
-	if err := u.Validate.Struct(request); err != nil {
-		if validationErrors, ok := err.(validator.ValidationErrors); ok {
-			u.Log.Warnf("Validation failed: %+v", validationErrors)
-			formattedErrors := helper.FormatValidationErrors(validationErrors)
-			return nil, model.ErrValidationFailed(formattedErrors)
-		}
-		u.Log.Warnf("Failed to validate request body: %+v", err)
-		return nil, model.ErrBadRequest
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
 	}
 	// check if seller has a store
 	var store entity.Store

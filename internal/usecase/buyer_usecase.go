@@ -10,6 +10,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -54,11 +55,11 @@ func (u *BuyerUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder
         err := u.BuyerRepository.ProductRepository.FindByUUID(tx, &product, item.ProductUUID, "product_uuid")
         if err != nil {
             u.Log.WithError(err).Errorf("Product with ID %s not found", item.ProductUUID)
-            return nil, fmt.Errorf("product with ID %s not found", item.ProductUUID)
+            return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Product with ID %s not found", item.ProductUUID), nil)
         }
         if product.Stock < item.Quantity {
             u.Log.Warnf("Product %s has insufficient stock", product.ProductName)
-            return nil, fmt.Errorf("product %s has insufficient stock", product.ProductName)
+            return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Product %s has insufficient stock", product.ProductName), nil)
         }
 
         product.Stock -= item.Quantity

@@ -1,6 +1,10 @@
 package model
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"fmt"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 type ApiError struct {
     StatusCode int         `json:"-"`
@@ -9,7 +13,7 @@ type ApiError struct {
 }
 
 func (e *ApiError) Error() string {
-    return e.Message
+    return fmt.Sprintf("%d: %s", e.StatusCode, e.Message)
 }
 
 func NewApiError(statusCode int, message string, errors interface{}) *ApiError {

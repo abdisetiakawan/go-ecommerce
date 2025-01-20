@@ -7,8 +7,7 @@ import (
 )
 
 func SetupSellerRoute(r *RouteConfig, app *fiber.App, sellerController *seller.SellerController) {
-	app.Use(r.AuthMiddleware)
-	app.Use(middleware.SellerOnly())
-	app.Post("/api/seller/register", sellerController.RegisterStore)
-	app.Post("/api/seller/products", sellerController.RegisterProduct)
+	sellerGroup := app.Group("/api/seller", r.AuthMiddleware, middleware.SellerOnly())
+	sellerGroup.Post("/register", sellerController.RegisterStore)
+	sellerGroup.Post("/products", sellerController.RegisterProduct)
 }

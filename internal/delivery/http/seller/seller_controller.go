@@ -77,3 +77,28 @@ func (c *SellerController) UpdateStore(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated store", fiber.StatusOK, nil, nil))
 }
+
+func (c *SellerController) GetProducts(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	request := &model.GetProductsRequest{
+		UserID: authID.ID,
+		Search: ctx.Query("search", ""),
+		Category: ctx.Query("category", ""),
+		PriceMin: ctx.QueryFloat("price_min"),
+		PriceMax: ctx.QueryFloat("price_max"),
+		Page:   ctx.QueryInt("page", 1),
+		Limit:  ctx.QueryInt("limit", 10),
+	}
+	response, total, err := c.UseCase.GetProducts(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to get products: %+v", err)
+		return err
+	}
+	paging := &model.PageMetadata{
+		Page: request.Page,
+		Size: request.Limit,
+		TotalItem: total,
+		TotalPage: int64(total) / int64(request.Limit),
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get products", fiber.StatusOK, paging, nil))
+}

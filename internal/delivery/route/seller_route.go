@@ -12,4 +12,5 @@ func SetupSellerRoute(r *RouteConfig, app *fiber.App, sellerController *seller.S
 	sellerGroup.Get("/store", sellerController.GetStore)
 	sellerGroup.Put("/store", sellerController.UpdateStore)
 	sellerGroup.Post("/products", sellerController.RegisterProduct)
+	sellerGroup.Get("/products", sellerController.GetProducts)
 }

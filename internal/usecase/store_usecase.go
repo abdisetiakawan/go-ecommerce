@@ -104,6 +104,9 @@ func (u *StoreUseCase) GetStore(ctx context.Context, id uint) (*model.StoreRespo
 }
 
 func (u *StoreUseCase) Update(ctx context.Context, request *model.UpdateStore) (*model.StoreResponse, error) {
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
 	var store entity.Store
 	if err := u.SellerRepository.StoreRepository.FindByID(u.DB, &store, request.ID); err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -124,4 +127,20 @@ func (u *StoreUseCase) Update(ctx context.Context, request *model.UpdateStore) (
 		return nil, err
 	}
 	return converter.StoreToResponse(&store), nil
+}
+
+func (u *StoreUseCase) GetProducts (ctx context.Context, request *model.GetProductsRequest) ([]model.ProductResponse, int64, error) {
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, 0, err
+	}
+	products, total, err := u.SellerRepository.GetProducts(u.DB, request)
+	if err != nil {
+		u.Log.WithError(err).Errorf("Failed to get products")
+		return nil, 0, err
+	}
+	responses := make([]model.ProductResponse, len(products))
+	for i, product := range products {
+		responses[i] = *converter.ProductsToResponse(&product)
+	}
+	return responses, total, nil
 }

@@ -89,3 +89,39 @@ func (u *StoreUseCase) CreateProduct(ctx context.Context, request *model.Registe
 
 	return converter.ProductToResponse(product), nil
 }
+
+func (u *StoreUseCase) GetStore(ctx context.Context, id uint) (*model.StoreResponse, error) {
+	var store entity.Store
+	if err := u.SellerRepository.StoreRepository.FindByID(u.DB, &store, id); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Store not found")
+			return nil, model.ErrNotFound
+		}
+		u.Log.Warnf("Failed to get store: %+v", err)
+		return nil, model.ErrInternalServer
+	}
+	return converter.StoreToResponse(&store), nil
+}
+
+func (u *StoreUseCase) Update(ctx context.Context, request *model.UpdateStore) (*model.StoreResponse, error) {
+	var store entity.Store
+	if err := u.SellerRepository.StoreRepository.FindByID(u.DB, &store, request.ID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Store not found")
+			return nil, model.ErrNotFound
+		}
+		u.Log.Warnf("Failed to get store: %+v", err)
+		return nil, model.ErrInternalServer
+	}
+	if request.StoreName != "" {
+		store.StoreName = request.StoreName
+	}
+	if request.Description != "" {
+		store.Description = request.Description
+	}
+	if err := u.SellerRepository.StoreRepository.Update(u.DB, &store); err != nil {
+		u.Log.Warnf("Failed to update store: %+v", err)
+		return nil, err
+	}
+	return converter.StoreToResponse(&store), nil
+}

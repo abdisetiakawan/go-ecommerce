@@ -9,5 +9,7 @@ import (
 func SetupSellerRoute(r *RouteConfig, app *fiber.App, sellerController *seller.SellerController) {
 	sellerGroup := app.Group("/api/seller", r.AuthMiddleware, middleware.SellerOnly())
 	sellerGroup.Post("/register", sellerController.RegisterStore)
+	sellerGroup.Get("/store", sellerController.GetStore)
+	sellerGroup.Put("/store", sellerController.UpdateStore)
 	sellerGroup.Post("/products", sellerController.RegisterProduct)
 }

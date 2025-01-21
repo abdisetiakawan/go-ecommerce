@@ -51,3 +51,29 @@ func (c *SellerController) RegisterProduct(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully registered product", fiber.StatusCreated, nil, nil))
 }
+
+func (c *SellerController) GetStore(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	response, err := c.UseCase.GetStore(ctx.UserContext(), authID.ID)
+	if err != nil {
+		c.Logger.Warnf("Failed to get store: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get store", fiber.StatusOK, nil, nil))
+}
+
+func (c *SellerController) UpdateStore(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	request := new(model.UpdateStore)
+	request.ID = authID.ID
+	if err := ctx.BodyParser(request); err != nil {
+		c.Logger.Warnf("Failed to parse request body: %+v", err)
+		return err
+	}
+	response, err := c.UseCase.Update(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to update store: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated store", fiber.StatusOK, nil, nil))
+}

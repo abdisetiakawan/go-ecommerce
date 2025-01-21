@@ -16,4 +16,6 @@ type ProfileResponse struct {
 	Address     string `json:"address"`
 	Avatar      string `json:"avatar"`
 	Bio         string `json:"bio"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }

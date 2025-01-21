@@ -13,5 +13,7 @@ func ProfileToResponse(profile *entity.Profile) *model.ProfileResponse {
 		Address:     profile.Address,
 		Avatar:      profile.Avatar,
 		Bio:         profile.Bio,
+		CreatedAt:   profile.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:   profile.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
 }

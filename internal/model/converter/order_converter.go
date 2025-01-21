@@ -33,6 +33,7 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
             PaymentMethod: order.Payment.Method,
             Status:        order.Payment.Status,
         },
+        CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
     }
 }
 

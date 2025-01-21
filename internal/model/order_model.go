@@ -30,6 +30,7 @@ type OrderResponse struct {
 	Items      []OrderItemResponse `json:"items"`
 	Shipping   ShippingResponse    `json:"shipping"`
 	Payment    PaymentResponse     `json:"payment"`
+	CreatedAt  string              `json:"created_at"`
 }
 
 type OrderItemResponse struct {

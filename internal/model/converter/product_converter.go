@@ -18,3 +18,14 @@ func ProductToResponse(product *entity.Product) *model.ProductResponse {
 		UpdatedAt:   product.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
 }
+
+func ProductsToResponse(product *entity.Product) *model.ProductResponse {
+	return &model.ProductResponse{
+		ProductUUID: product.ProductUUID,
+		ProductName: product.ProductName,
+		Description: product.Description,
+		Price:       product.Price,
+		Stock:       product.Stock,
+		Category:    product.Category,
+	}
+}

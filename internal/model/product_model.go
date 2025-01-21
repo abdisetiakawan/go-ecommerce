@@ -11,12 +11,22 @@ type RegisterProduct struct {
 
 type ProductResponse struct {
 	ProductUUID string  `json:"product_uuid"`
-	StoreID     uint    `json:"store_id"`
+	StoreID     uint    `json:"store_id,omitempty"`
 	ProductName string  `json:"product_name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	Stock       int     `json:"stock"`
 	Category    string  `json:"category"`
-	CreatedAt   string  `json:"created_at"`
-	UpdatedAt   string  `json:"updated_at"`
+	CreatedAt   string  `json:"created_at,omitempty"`
+	UpdatedAt   string  `json:"updated_at,omitempty"`
+}
+
+type GetProductsRequest struct {
+	UserID   uint    `json:"-"`
+	Search   string  `json:"-"`
+	Category string  `json:"-" validate:"omitempty,oneof=clothes electronics accessories"`
+	PriceMin float64 `json:"-" validate:"omitempty,gt=0"`
+	PriceMax float64 `json:"-" validate:"omitempty,gt=0"`
+	Page     int     `json:"-"`
+	Limit    int     `json:"-"`
 }

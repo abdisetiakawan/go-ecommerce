@@ -34,7 +34,7 @@ type OrderResponse struct {
 
 type OrderItemResponse struct {
 	OrderItemUuid string `json:"order_item_uuid"`
-	Quantity  int  `json:"quantity"`
+	Quantity      int    `json:"quantity"`
 }
 
 type ShippingResponse struct {
@@ -50,4 +50,17 @@ type PaymentResponse struct {
 	PaymentUUID   string `json:"payment_uuid"`
 	PaymentMethod string `json:"payment_method"`
 	Status        string `json:"status"`
+}
+
+type SearchOrderRequest struct {
+	UserID uint   `json:"-"`
+	Status string `json:"status" validate:"omitempty,oneof=pending processing delivered canceled"`
+	Page   int    `json:"page"`
+	Limit  int    `json:"limit"`
+}
+
+type ListOrderResponse struct {
+	OrderUUID  string  `json:"order_uuid"`
+	TotalPrice float64 `json:"total_price"`
+	Status     string  `json:"status"`
 }

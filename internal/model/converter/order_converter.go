@@ -35,3 +35,11 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
         },
     }
 }
+
+func OrdersToResponse(orders *entity.Order) *model.ListOrderResponse {
+    return &model.ListOrderResponse{
+        OrderUUID: orders.OrderUUID,
+        TotalPrice: orders.TotalPrice,
+        Status: orders.Status,
+    }
+}

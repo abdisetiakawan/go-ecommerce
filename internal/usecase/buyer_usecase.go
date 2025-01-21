@@ -127,3 +127,19 @@ func (u *BuyerUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder
 
     return converter.OrderToResponse(order), nil
 }
+
+func (u *BuyerUseCase) GetOrders(ctx context.Context, request *model.SearchOrderRequest) ([]model.ListOrderResponse, int64, error) {
+    if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+        return nil, 0, err
+    }
+    tasks, total, err := u.BuyerRepository.GetOrders(u.DB, request)
+    if err != nil {
+        u.Log.WithError(err).Error("Failed to get orders")
+        return nil, 0, model.ErrInternalServer
+    }
+    responses := make([]model.ListOrderResponse, len(tasks))
+    for i, task := range tasks {
+        responses[i] = *converter.OrdersToResponse(&task)
+    }
+    return responses, total, nil
+}

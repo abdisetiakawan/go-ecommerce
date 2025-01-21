@@ -8,5 +8,6 @@ import (
 
 func SetupBuyerRoute(r *RouteConfig, app *fiber.App, buyerController *buyer.BuyerController) {
 	buyerGroup := app.Group("/api/buyer", r.AuthMiddleware, middleware.BuyerOnly())
+	buyerGroup.Get("/orders", buyerController.SearchOrders)
 	buyerGroup.Post("/orders", buyerController.CreateOrder)
 }

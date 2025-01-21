@@ -36,3 +36,25 @@ func (c *BuyerController) CreateOrder(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully created order", fiber.StatusCreated, nil, nil))
 }
+
+func (c *BuyerController) SearchOrders(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+	request := &model.SearchOrderRequest{
+		UserID: auth.ID,
+		Status: ctx.Query("status", ""),
+		Page:   ctx.QueryInt("page", 1),
+		Limit:  ctx.QueryInt("limit", 10),
+	}
+	response, total, err := c.UseCase.GetOrders(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to get orders: %+v", err)
+		return err
+	}
+	paging := &model.PageMetadata{
+		Page:      request.Page,
+		Size:      request.Limit,
+		TotalItem: total,
+		TotalPage: int64(total) / int64(request.Limit),
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get orders", fiber.StatusOK, paging, nil))
+}

@@ -59,3 +59,16 @@ func (u *UserUseCase) Create(ctx context.Context, request *model.CreateProfile) 
 
 	return converter.ProfileToResponse(profile), nil
 }
+
+func (u *UserUseCase) Get(ctx context.Context, userID uint) (*model.ProfileResponse, error) {
+	var profile entity.Profile
+	if err := u.UserRepository.FindByID(u.DB, &profile, userID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Profile not found")
+			return nil, model.ErrNotFound
+		}
+		u.Log.Warnf("Failed to get profile: %+v", err)
+		return nil, err
+	}
+	return converter.ProfileToResponse(&profile), nil
+}

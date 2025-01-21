@@ -38,3 +38,14 @@ func (c *UserController) CreateProfile(ctx *fiber.Ctx) error {
 
     return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully created profile", fiber.StatusCreated, nil, nil))
 }
+
+func (c *UserController) GetProfile(ctx *fiber.Ctx) error {
+    authID := middleware.GetUser(ctx)
+    response, err := c.UseCase.Get(ctx.UserContext(), authID.ID)
+    if err != nil {
+        c.Logger.Warnf("Failed to get profile: %+v", err)
+        return err
+    }
+
+    return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get profile", fiber.StatusOK, nil, nil))
+}

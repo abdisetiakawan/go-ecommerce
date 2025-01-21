@@ -8,4 +8,5 @@ import (
 func SetupUserRoute(r *RouteConfig, app *fiber.App, userController *user.UserController) {
 	app.Use(r.AuthMiddleware)
 	app.Post("/api/user/profile", userController.CreateProfile)
+	app.Get("/api/user/profile", userController.GetProfile)
 }

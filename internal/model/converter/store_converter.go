@@ -7,7 +7,6 @@ import (
 
 func StoreToResponse(store *entity.Store) *model.StoreResponse {
 	return &model.StoreResponse{
-		UserID:      store.UserID,
 		StoreName:   store.StoreName,
 		Description: store.Description,
 	}

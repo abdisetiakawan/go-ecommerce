@@ -7,7 +7,6 @@ type RegisterStore struct {
 }
 
 type StoreResponse struct {
-	UserID      uint   `json:"user_id"`
 	StoreName   string `json:"store_name"`
 	Description string `json:"description"`
 }

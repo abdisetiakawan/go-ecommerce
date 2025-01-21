@@ -58,3 +58,18 @@ func (c *BuyerController) SearchOrders(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get orders", fiber.StatusOK, paging, nil))
 }
+
+func (c *BuyerController) GetOrder(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+	uuid := ctx.Params("order_uuid")
+	request := &model.GetOrderDetails{
+		UserID: auth.ID,
+		OrderUUID: uuid,
+	}
+	response, err := c.UseCase.GetOrder(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to get order: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get order", fiber.StatusOK, nil, nil))
+}

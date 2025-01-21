@@ -143,3 +143,15 @@ func (u *BuyerUseCase) GetOrders(ctx context.Context, request *model.SearchOrder
     }
     return responses, total, nil
 }
+
+func(u *BuyerUseCase) GetOrder(ctx context.Context, request *model.GetOrderDetails) (*model.OrderResponse, error) {
+    if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+        return nil, err
+    }
+    order, err := u.BuyerRepository.GetOrder(u.DB, request)
+    if err != nil {
+        u.Log.WithError(err).Error("Failed to get order")
+        return nil, err
+    }
+    return converter.OrderToResponse(order), nil
+}

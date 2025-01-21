@@ -64,3 +64,8 @@ type ListOrderResponse struct {
 	TotalPrice float64 `json:"total_price"`
 	Status     string  `json:"status"`
 }
+
+type GetOrderDetails struct {
+	UserID    uint   `json:"-"`
+	OrderUUID string `json:"-" validate:"required"`
+}

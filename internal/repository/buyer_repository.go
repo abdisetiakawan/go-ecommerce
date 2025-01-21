@@ -1,8 +1,11 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
+	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -39,6 +42,26 @@ func (r *BuyerRepository) GetOrders(db *gorm.DB, request *model.SearchOrderReque
 	}
 
 	return orders, total, nil
+}
+
+func (r *BuyerRepository) GetOrder(db *gorm.DB, request *model.GetOrderDetails) (*entity.Order, error) {
+	var order entity.Order
+	if err := db.Preload("Items", func (db *gorm.DB) *gorm.DB {
+		return db.Order("order_items.created_at ASC")
+	}).
+	Preload("Payment").
+	Preload("Shipping").
+	Where(&entity.Order{
+		OrderUUID: request.OrderUUID,
+		UserID:    request.UserID,
+	}).
+	Take(&order).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Order with ID %s not found", request.OrderUUID), nil)
+		}
+		return nil, err
+	}
+	return &order, nil
 }
 
 func (r *BuyerRepository) FilterOrders(request *model.SearchOrderRequest) func(db *gorm.DB) *gorm.DB {

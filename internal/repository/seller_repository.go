@@ -84,13 +84,13 @@ func (r *SellerRepository) GetProduct(db *gorm.DB, request *model.GetProductRequ
 	return &product, nil
 }
 
-func (r *SellerRepository) CheckProduct(db *gorm.DB, product *entity.Product, request *model.UpdateProduct) error {
+func (r *SellerRepository) CheckProduct(db *gorm.DB, product *entity.Product, user_id uint, product_uuid string) error {
 	return db.Model(&entity.Product{}).
 		Preload("Store", func(db *gorm.DB) *gorm.DB {
-			return db.Where("user_id = ?", request.UserID)
+			return db.Where("user_id = ?", user_id)
 		}).
 		Where(&entity.Product{
-			ProductUUID: request.ProductUUID,
+			ProductUUID: product_uuid,
 		}).
 		Take(product).
 		Error

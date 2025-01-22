@@ -72,3 +72,38 @@ func (u *UserUseCase) Get(ctx context.Context, userID uint) (*model.ProfileRespo
 	}
 	return converter.ProfileToResponse(&profile), nil
 }
+
+func (u *UserUseCase) Update(ctx context.Context, request *model.UpdateProfile) (*model.ProfileResponse, error) {
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
+	var profile entity.Profile
+	if err := u.UserRepository.FindByID(u.DB, &profile, request.UserID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Profile not found")
+			return nil, model.ErrNotFound
+		}
+		u.Log.Warnf("Failed to get profile: %+v", err)
+		return nil, err
+	}
+	if request.Gender != "" {
+		profile.Gender = request.Gender
+	}
+	if request.PhoneNumber != "" {
+		profile.PhoneNumber = request.PhoneNumber
+	}
+	if request.Address != "" {
+		profile.Address = request.Address
+	}
+	if request.Avatar != "" {
+		profile.Avatar = request.Avatar
+	}
+	if request.Bio != "" {
+		profile.Bio = request.Bio
+	}
+	if err := u.UserRepository.Update(u.DB, &profile); err != nil {
+		u.Log.Warnf("Failed to update profile: %+v", err)
+		return nil, err
+	}
+	return converter.ProfileToResponse(&profile), nil
+}

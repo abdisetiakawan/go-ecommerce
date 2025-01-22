@@ -50,3 +50,22 @@ func (c *UserController) GetProfile(ctx *fiber.Ctx) error {
 
     return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get profile", fiber.StatusOK, nil, nil))
 }
+
+func (c *UserController) UpdateProfile(ctx *fiber.Ctx) error {
+    authID := middleware.GetUser(ctx)
+    request := new(model.UpdateProfile)
+    request.UserID = authID.ID
+
+    if err := ctx.BodyParser(request); err != nil {
+        c.Logger.Warnf("Failed to parse request body: %+v", err)
+        return err
+    }
+    helper.TrimSpaces(request)
+    response, err := c.UseCase.Update(ctx.UserContext(), request)
+    if err != nil {
+        c.Logger.Warnf("Failed to update profile: %+v", err)
+        return err
+    }
+
+    return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated profile", fiber.StatusOK, nil, nil))
+}

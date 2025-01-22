@@ -19,3 +19,12 @@ type ProfileResponse struct {
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
 }
+
+type UpdateProfile struct {
+	UserID      uint   `json:"-"`
+	Gender      string `json:"gender" validate:"omitempty,oneof=male female"`
+	PhoneNumber string `json:"phone_number" validate:"omitempty,e164"`
+	Address     string `json:"address" validate:"omitempty"`
+	Avatar      string `json:"avatar" validate:"omitempty,url"`
+	Bio         string `json:"bio" validate:"omitempty"`
+}

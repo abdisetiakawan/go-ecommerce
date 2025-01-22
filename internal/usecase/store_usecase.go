@@ -94,7 +94,7 @@ func (u *StoreUseCase) CreateProduct(ctx context.Context, request *model.Registe
 
 func (u *StoreUseCase) GetStore(ctx context.Context, id uint) (*model.StoreResponse, error) {
 	var store entity.Store
-	if err := u.SellerRepository.StoreRepository.FindByID(u.DB, &store, id); err != nil {
+	if err := u.SellerRepository.StoreRepository.FindByUserID(u.DB, &store, id); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			u.Log.Warnf("Store not found")
 			return nil, model.ErrNotFound
@@ -212,4 +212,24 @@ func (u *StoreUseCase) DeleteProduct (ctx context.Context, request *model.Delete
 		return err
 	}
 	return nil
+}
+
+func (u *StoreUseCase) GetOrder(ctx context.Context, request *model.GetOrderDetails) (*model.OrderResponse, error) {
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
+	var store entity.Store
+	if err := u.SellerRepository.StoreRepository.FindByUserID(u.DB, &store, request.UserID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Store not found")
+			return nil, model.ErrStoreNotFound
+		}
+		return nil, err
+	}
+	order, err := u.SellerRepository.GetOrder(u.DB, request.OrderUUID, store.UserID)
+	if err != nil {
+		u.Log.WithError(err).Errorf("Failed to get order")
+		return nil, err
+	}
+	return converter.OrderToResponse(order), nil
 }

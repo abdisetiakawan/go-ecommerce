@@ -83,3 +83,15 @@ func (r *SellerRepository) GetProduct(db *gorm.DB, request *model.GetProductRequ
 	}
 	return &product, nil
 }
+
+func (r *SellerRepository) CheckProduct(db *gorm.DB, product *entity.Product, request *model.UpdateProduct) error {
+	return db.Model(&entity.Product{}).
+		Preload("Store", func(db *gorm.DB) *gorm.DB {
+			return db.Where("user_id = ?", request.UserID)
+		}).
+		Where(&entity.Product{
+			ProductUUID: request.ProductUUID,
+		}).
+		Take(product).
+		Error
+}

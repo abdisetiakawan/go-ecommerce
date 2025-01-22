@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
@@ -9,6 +10,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -155,4 +157,39 @@ func (u *StoreUseCase) GetProduct (ctx context.Context, request *model.GetProduc
 		return nil, err
 	}
 	return converter.ProductToResponse(response), nil
+}
+
+func (u *StoreUseCase) UpdateProduct (ctx context.Context, request *model.UpdateProduct) (*model.ProductResponse, error) {
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
+	var product entity.Product
+	if err := u.SellerRepository.CheckProduct(u.DB, &product, request); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Product not found")
+			return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Product with id %s not found", request.ProductUUID), nil)
+		}
+		u.Log.WithError(err).Errorf("Failed to update product")
+		return nil, err
+	}
+	if request.ProductName != "" {
+		product.ProductName = request.ProductName
+	}
+	if request.Description != "" {
+		product.Description = request.Description
+	}
+	if request.Price != 0 {
+		product.Price = request.Price
+	}
+	if request.Stock != 0 {
+		product.Stock = request.Stock
+	}
+	if request.Category != "" {
+		product.Category = request.Category
+	}
+	if err := u.SellerRepository.ProductRepository.Update(u.DB, &product); err != nil {
+		u.Log.WithError(err).Errorf("Failed to update product")
+		return nil, err
+	}
+	return converter.ProductToResponse(&product), nil
 }

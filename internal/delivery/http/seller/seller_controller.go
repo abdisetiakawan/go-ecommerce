@@ -120,3 +120,21 @@ func (c *SellerController) GetProductById(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get product", fiber.StatusOK, nil, nil))
 }
+
+func (c *SellerController) UpdateProduct(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	request := new(model.UpdateProduct)
+	request.UserID = authID.ID
+	request.ProductUUID = ctx.Params("product_uuid")
+	if err := ctx.BodyParser(request); err != nil {
+		c.Logger.Warnf("Failed to parse request body: %+v", err)
+		return err
+	}
+	helper.TrimSpaces(request)
+	response, err := c.UseCase.UpdateProduct(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to update product: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated product", fiber.StatusOK, nil, nil))
+}

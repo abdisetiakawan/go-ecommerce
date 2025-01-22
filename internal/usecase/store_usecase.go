@@ -144,3 +144,15 @@ func (u *StoreUseCase) GetProducts (ctx context.Context, request *model.GetProdu
 	}
 	return responses, total, nil
 }
+
+func (u *StoreUseCase) GetProduct (ctx context.Context, request *model.GetProductRequest) (*model.ProductResponse, error) {
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, err
+	}
+	response, err := u.SellerRepository.GetProduct(u.DB, request)
+	if err != nil {
+		u.Log.WithError(err).Errorf("Failed to get product")
+		return nil, err
+	}
+	return converter.ProductToResponse(response), nil
+}

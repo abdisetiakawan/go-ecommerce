@@ -106,3 +106,17 @@ func (c *SellerController) GetProducts(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get products", fiber.StatusOK, paging, nil))
 }
+
+func (c *SellerController) GetProductById(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	request := &model.GetProductRequest{
+		UserID: authID.ID,
+		ProductUUID: ctx.Params("product_uuid"),
+	}
+	response, err := c.UseCase.GetProduct(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to get product: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get product", fiber.StatusOK, nil, nil))
+}

@@ -1,8 +1,11 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
+	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -66,4 +69,17 @@ func (r *SellerRepository) GetProducts(db *gorm.DB,	request *model.GetProductsRe
 	}
 
 	return products, total, nil
+}
+
+func (r *SellerRepository) GetProduct(db *gorm.DB, request *model.GetProductRequest) (*entity.Product, error) {
+	var product entity.Product
+	if err := db.Model(&entity.Product{}).Preload("Store", func(db *gorm.DB) *gorm.DB {
+		return db.Where("user_id = ?", request.UserID)
+	}).Take(&product, "product_uuid = ?", request.ProductUUID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Product with ID %s not found", request.ProductUUID), nil)
+		}
+		return nil, err
+	}
+	return &product, nil
 }

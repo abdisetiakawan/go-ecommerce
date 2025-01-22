@@ -164,7 +164,7 @@ func (u *StoreUseCase) UpdateProduct (ctx context.Context, request *model.Update
 		return nil, err
 	}
 	var product entity.Product
-	if err := u.SellerRepository.CheckProduct(u.DB, &product, request); err != nil {
+	if err := u.SellerRepository.CheckProduct(u.DB, &product, request.UserID, request.ProductUUID); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			u.Log.Warnf("Product not found")
 			return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Product with id %s not found", request.ProductUUID), nil)
@@ -192,4 +192,24 @@ func (u *StoreUseCase) UpdateProduct (ctx context.Context, request *model.Update
 		return nil, err
 	}
 	return converter.ProductToResponse(&product), nil
+}
+
+func (u *StoreUseCase) DeleteProduct (ctx context.Context, request *model.DeleteProductRequest) error {
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return err
+	}
+	var product entity.Product
+	if err := u.SellerRepository.CheckProduct(u.DB, &product, request.UserID, request.ProductUUID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Product not found")
+			return model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Product with id %s not found", request.ProductUUID), nil)
+		}
+		u.Log.WithError(err).Errorf("Failed to delete product")
+		return err
+	}
+	if err := u.SellerRepository.ProductRepository.SoftDelete(u.DB, product.ID); err != nil {
+		u.Log.WithError(err).Errorf("Failed to delete product")
+		return err
+	}
+	return nil
 }

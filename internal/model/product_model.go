@@ -45,3 +45,8 @@ type UpdateProduct struct {
 	Stock       int     `json:"stock" validate:"omitempty,gte=0"`
 	Category    string  `json:"category" validate:"omitempty,oneof=clothes electronics accessories"`
 }
+
+type DeleteProductRequest struct {
+	UserID      uint   `json:"-" validate:"required"`
+	ProductUUID string `json:"-" validate:"required,uuid"`
+}

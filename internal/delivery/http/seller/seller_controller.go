@@ -138,3 +138,16 @@ func (c *SellerController) UpdateProduct(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated product", fiber.StatusOK, nil, nil))
 }
+
+func (c *SellerController) DeleteProduct(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	request := &model.DeleteProductRequest{
+		UserID: authID.ID,
+		ProductUUID: ctx.Params("product_uuid"),
+	}
+	if err := c.UseCase.DeleteProduct(ctx.UserContext(), request); err != nil {
+		c.Logger.Warnf("Failed to delete product: %+v", err)
+		return err
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
+}

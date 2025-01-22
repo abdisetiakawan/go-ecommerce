@@ -35,3 +35,13 @@ type GetProductRequest struct {
 	UserID      uint   `json:"-" validate:"required"`
 	ProductUUID string `json:"-" validate:"required,uuid"`
 }
+
+type UpdateProduct struct {
+	UserID      uint    `json:"-" validate:"required"`
+	ProductUUID string  `json:"-" validate:"required,uuid"`
+	ProductName string  `json:"product_name" validate:"omitempty,min=3,max=255"`
+	Description string  `json:"description" validate:"omitempty,min=10"`
+	Price       float64 `json:"price" validate:"omitempty,gt=0"`
+	Stock       int     `json:"stock" validate:"omitempty,gte=0"`
+	Category    string  `json:"category" validate:"omitempty,oneof=clothes electronics accessories"`
+}

@@ -8,7 +8,7 @@ type CreateOrder struct {
 }
 
 type OrderItemRequest struct {
-	ProductUUID string `json:"product_uuid" validate:"required"`
+	ProductUUID string `json:"product_uuid" validate:"required,uuid"`
 	Quantity    int    `json:"quantity" validate:"required,gte=1"`
 }
 
@@ -68,5 +68,5 @@ type ListOrderResponse struct {
 
 type GetOrderDetails struct {
 	UserID    uint   `json:"-"`
-	OrderUUID string `json:"-" validate:"required"`
+	OrderUUID string `json:"-" validate:"required,uuid"`
 }

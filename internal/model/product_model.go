@@ -30,3 +30,8 @@ type GetProductsRequest struct {
 	Page     int     `json:"-"`
 	Limit    int     `json:"-"`
 }
+
+type GetProductRequest struct {
+	UserID      uint   `json:"-" validate:"required"`
+	ProductUUID string `json:"-" validate:"required,uuid"`
+}

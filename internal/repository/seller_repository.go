@@ -13,6 +13,7 @@ import (
 type SellerRepository struct {
 	StoreRepository *Repository[entity.Store]
 	ProductRepository *Repository[entity.Product]
+	OrderRepository *Repository[entity.Order]
 	Log *logrus.Logger
 }
 
@@ -20,6 +21,7 @@ func NewSellerRepository(log *logrus.Logger, db *gorm.DB) *SellerRepository {
 	return &SellerRepository{
 		StoreRepository: &Repository[entity.Store]{DB: db},
 		ProductRepository: &Repository[entity.Product]{DB: db},
+		OrderRepository: &Repository[entity.Order]{DB: db},
 		Log: log,
 	}
 }
@@ -94,4 +96,22 @@ func (r *SellerRepository) CheckProduct(db *gorm.DB, product *entity.Product, us
 		}).
 		Take(product).
 		Error
+}
+
+func (r *SellerRepository) GetOrder(db *gorm.DB, order_uuid string, store_id uint) (*entity.Order, error) {
+	var order entity.Order
+	if err := db.Preload("Items.Product", func(db *gorm.DB) *gorm.DB {
+		return db.Where("store_id = ?", store_id)
+	}).
+		Preload("Payment").
+		Preload("Shipping").
+		Where("order_uuid = ?", order_uuid).
+		Take(&order).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Order with UUID %s not found", order_uuid), nil)
+		}
+		return nil, err
+	}
+
+	return &order, nil
 }

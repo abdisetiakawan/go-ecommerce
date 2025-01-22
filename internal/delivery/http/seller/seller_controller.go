@@ -151,3 +151,17 @@ func (c *SellerController) DeleteProduct(ctx *fiber.Ctx) error {
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
+
+func (c *SellerController) GetOrderById(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	request := &model.GetOrderDetails{
+		UserID: authID.ID,
+		OrderUUID: ctx.Params("order_uuid"),
+	}
+	response, err := c.UseCase.GetOrder(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to get order: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get order", fiber.StatusOK, nil, nil))
+}

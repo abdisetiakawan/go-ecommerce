@@ -54,7 +54,7 @@ func (r *Repository[T]) UpdateStatus(db *gorm.DB, id uint, status string) error 
 	return db.Model(new(T)).Where("id = ?", id).Update("status", status).Error
 }
 
-func (r *Repository[T]) FindByUserID(db *gorm.DB, entities *[]T, userID uint) error {
+func (r *Repository[T]) FindByUserID(db *gorm.DB, entities *T, userID uint) error {
 	return db.Where("user_id = ?", userID).Find(entities).Error
 }
 

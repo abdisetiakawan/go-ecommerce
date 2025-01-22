@@ -2,6 +2,7 @@ package seller
 
 import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
+	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase"
 	"github.com/gofiber/fiber/v2"
@@ -28,6 +29,7 @@ func (c *SellerController) RegisterStore(ctx *fiber.Ctx) error {
 		c.Logger.Warnf("Failed to parse request body: %+v", err)
 		return err
 	}
+	helper.TrimSpaces(request)
 	response, err := c.UseCase.Create(ctx.UserContext(), request)
 	if err != nil {
 		c.Logger.Warnf("Failed to register store: %+v", err)
@@ -44,6 +46,7 @@ func (c *SellerController) RegisterProduct(ctx *fiber.Ctx) error {
 		c.Logger.Warnf("Failed to parse request body: %+v", err)
 		return err
 	}
+	helper.TrimSpaces(request)
 	response, err := c.UseCase.CreateProduct(ctx.UserContext(), request)
 	if err != nil {
 		c.Logger.Warnf("Failed to register product: %+v", err)
@@ -70,6 +73,7 @@ func (c *SellerController) UpdateStore(ctx *fiber.Ctx) error {
 		c.Logger.Warnf("Failed to parse request body: %+v", err)
 		return err
 	}
+	helper.TrimSpaces(request)
 	response, err := c.UseCase.Update(ctx.UserContext(), request)
 	if err != nil {
 		c.Logger.Warnf("Failed to update store: %+v", err)

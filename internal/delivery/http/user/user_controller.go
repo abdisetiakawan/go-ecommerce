@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
+	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase"
 	"github.com/gofiber/fiber/v2"
@@ -29,7 +30,7 @@ func (c *UserController) CreateProfile(ctx *fiber.Ctx) error {
         c.Logger.Warnf("Failed to parse request body: %+v", err)
         return err
     }
-
+    helper.TrimSpaces(request)
     response, err := c.UseCase.Create(ctx.UserContext(), request)
     if err != nil {
         c.Logger.Warnf("Failed to create profile: %+v", err)

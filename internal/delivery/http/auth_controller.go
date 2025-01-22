@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase"
 	"github.com/gofiber/fiber/v2"
@@ -25,6 +26,7 @@ func (c *AuthController) Register(ctx *fiber.Ctx) error {
 		c.Logger.Warnf("Failed to parse request body : %+v", err)
 		return err
 	}
+	helper.TrimSpaces(request, request.ConfirmPassword, request.Password)
 	response, err := c.UseCase.Create(ctx.UserContext(), request)
 	if err != nil {
 		c.Logger.Warnf("Failed to register user : %+v", err)

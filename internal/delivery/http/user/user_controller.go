@@ -69,3 +69,21 @@ func (c *UserController) UpdateProfile(ctx *fiber.Ctx) error {
 
     return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated profile", fiber.StatusOK, nil, nil))
 }
+
+func (c *UserController) ChangePassword(ctx *fiber.Ctx) error {
+    authID := middleware.GetUser(ctx)
+    request := new(model.ChangePassword)
+    request.UserID = authID.ID
+
+    if err := ctx.BodyParser(request); err != nil {
+        c.Logger.Warnf("Failed to parse request body: %+v", err)
+        return err
+    }
+    helper.TrimSpaces(request, request.Password, request.ConfirmPassword, request.OldPassword)
+    if err := c.UseCase.ChangePassword(ctx.UserContext(), request); err != nil {
+        c.Logger.Warnf("Failed to change password: %+v", err)
+        return err
+    }
+
+    return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(true, "Successfully change password", fiber.StatusOK, nil, nil))
+}

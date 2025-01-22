@@ -40,7 +40,7 @@ func Bootstrap(config *BootstrapConfig) {
 	buyerUseCase := usecase.NewBuyerUseCase(config.DB, config.Log, config.Validate, buyerRepository, config.UserUUID)
 	buyerController := buyer.NewBuyerController(buyerUseCase, config.Log)
 	
-	userRepository := repository.NewUserRepository(config.Log)
+	userRepository := repository.NewUserRepository(config.Log, config.DB)
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository)
 	userController := user.NewUserController(userUseCase, config.Log)
 	

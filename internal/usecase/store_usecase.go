@@ -258,3 +258,63 @@ func (u *StoreUseCase) GetOrders(ctx context.Context, request *model.SearchOrder
 	}
 	return responses, total, nil
 }
+
+func (c *StoreUseCase) UpdateShippingStatus(ctx context.Context, request *model.UpdateShippingStatusRequest) (*model.OrderResponse, error) {
+    tx := c.DB.WithContext(ctx).Begin()
+    defer tx.Rollback()
+
+    var store entity.Store
+    if err := c.SellerRepository.StoreRepository.FindByUserID(tx, &store, request.UserID); err != nil {
+        if err == gorm.ErrRecordNotFound {
+            return nil, model.ErrStoreNotFound
+        }
+        return nil, err
+    }
+
+    order, err := c.SellerRepository.GetOrder(tx, request.OrderUUID, store.ID)
+    if err != nil {
+        return nil, err
+    }
+
+    switch {
+    case order.Payment.Status != "paid":
+        return nil, model.NewApiError(fiber.StatusConflict, 
+            fmt.Sprintf("Cannot update shipping. Payment status is %s", order.Payment.Status), nil)
+    
+    case order.Shipping.Status == "delivered":
+        return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Cannot update shipping. Order is already %s", order.Status), nil)
+    
+    case request.Status == "shipped" && order.Shipping.Status != "pending":
+        return nil, model.NewApiError(fiber.StatusConflict, 
+            fmt.Sprintf("Cannot ship order. Current shipping status is %s", order.Shipping.Status), nil)
+
+	case request.Status == "delivered" && order.Shipping.Status == "pending": 
+		return nil, model.NewApiError(fiber.StatusConflict, 
+			fmt.Sprintf("Cannot deliver order. Current shipping status is %s", order.Shipping.Status), nil)
+			
+	case request.Status == order.Shipping.Status: 
+		return nil, model.NewApiError(fiber.StatusConflict, 
+			fmt.Sprintf("Cannot update shipping. Current shipping status is %s", order.Shipping.Status), nil)
+    }
+
+	order.Shipping.Status = request.Status
+	if request.Status == "shipped" {
+		order.Status = "shipped"
+	}
+	if request.Status == "delivered" {
+		order.Status = "completed"
+	}
+
+    if err := c.SellerRepository.OrderRepository.Update(tx, order); err != nil {
+        return nil, err
+    }
+	if err := c.SellerRepository.ShippingRepository.Update(tx, order.Shipping); err != nil {
+		return nil, err
+	}
+
+    if err := tx.Commit().Error; err != nil {
+        return nil, err
+    }
+
+    return converter.OrderToResponse(order), nil
+}

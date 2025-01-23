@@ -187,3 +187,20 @@ func (c *SellerController) GetOrders(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get orders", fiber.StatusOK, paging, nil))
 }
+
+func (c *SellerController) UpdateShippingStatus(ctx *fiber.Ctx) error {
+	authID := middleware.GetUser(ctx)
+	request := &model.UpdateShippingStatusRequest{}
+	request.UserID = authID.ID
+	request.OrderUUID = ctx.Params("order_uuid")
+	if err := ctx.BodyParser(request); err != nil {
+		c.Logger.Warnf("Failed to parse request body: %+v", err)
+		return err
+	}
+	response, err := c.UseCase.UpdateShippingStatus(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to update shipping status: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated shipping status", fiber.StatusOK, nil, nil))
+}

@@ -14,6 +14,7 @@ type SellerRepository struct {
 	StoreRepository *Repository[entity.Store]
 	ProductRepository *Repository[entity.Product]
 	OrderRepository *Repository[entity.Order]
+	ShippingRepository *Repository[entity.Shipping]
 	Log *logrus.Logger
 }
 
@@ -22,6 +23,7 @@ func NewSellerRepository(log *logrus.Logger, db *gorm.DB) *SellerRepository {
 		StoreRepository: &Repository[entity.Store]{DB: db},
 		ProductRepository: &Repository[entity.Product]{DB: db},
 		OrderRepository: &Repository[entity.Order]{DB: db},
+		ShippingRepository: &Repository[entity.Shipping]{DB: db},
 		Log: log,
 	}
 }

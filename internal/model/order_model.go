@@ -97,3 +97,9 @@ type CheckoutOrderRequest struct {
 	OrderUUID string `json:"-" validate:"required,uuid"`
 	UserID    uint   `json:"-"`
 }
+
+type UpdateShippingStatusRequest struct {
+	OrderUUID string `json:"-" validate:"required,uuid"`
+	UserID    uint   `json:"-"`
+	Status    string `json:"status" validate:"required,oneof=shipped delivered"`
+}

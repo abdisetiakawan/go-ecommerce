@@ -226,7 +226,7 @@ func (u *StoreUseCase) GetOrder(ctx context.Context, request *model.GetOrderDeta
 		}
 		return nil, err
 	}
-	order, err := u.SellerRepository.GetOrder(u.DB, request.OrderUUID, store.UserID)
+	order, err := u.SellerRepository.GetOrder(u.DB, request.OrderUUID, store.ID)
 	if err != nil {
 		u.Log.WithError(err).Errorf("Failed to get order")
 		return nil, err

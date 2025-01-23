@@ -121,7 +121,6 @@ func (r *SellerRepository) GetOrders(db *gorm.DB, request *model.SearchOrderRequ
     var total int64
     if err := db.Scopes(r.FilterOrders(request)).Preload("Items.Product").
         Preload("Payment").
-        Preload("Shipping").
         Where("id = ?", request.StoreID).
         Find(&orders).
         Count(&total).

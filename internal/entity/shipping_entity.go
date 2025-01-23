@@ -11,5 +11,5 @@ type Shipping struct {
 	City         string `gorm:"size:255;not null"`
 	Province     string `gorm:"size:255;not null"`
 	PostalCode   string `gorm:"size:10;not null"`
-	Status       string `gorm:"type:enum('pending', 'shipped', 'delivered', 'canceled');default:'pending';not null"`
+	Status       string `gorm:"type:enum('pending', 'shipped', 'delivered', 'cancelled');default:'pending';not null"`
 }

@@ -37,21 +37,38 @@ func (u *BuyerUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder
     tx := u.DB.WithContext(ctx).Begin()
     defer tx.Rollback()
 
-	if err := helper.ValidateStruct(u.Validate, u.Log, input); err != nil {
-		return nil, err
-	}
+    if err := helper.ValidateStruct(u.Validate, u.Log, input); err != nil {
+        return nil, err
+    }
+    var productUUIDs []string
+    for _, item := range input.Items {
+        productUUIDs = append(productUUIDs, item.ProductUUID)
+    }
 
+    // Validate that all products belong to the same store
+    storeID, err := u.BuyerRepository.FindStoreByProductUUIDs(tx, productUUIDs)
+    if err != nil {
+        if err == gorm.ErrRecordNotFound {
+            u.Log.Warn("One or more products not found")
+            return nil, model.NewApiError(fiber.StatusNotFound, "One or more products not found", nil)
+        }
+        if err == model.ErrBadRequest {
+            u.Log.Warn("Products belong to different stores")
+            return nil, model.NewApiError(fiber.StatusConflict, "Products must belong to the same store", nil)
+        }
+        u.Log.WithError(err).Error("Failed to validate products")
+        return nil, model.ErrInternalServer
+    }
 
     var totalPrice float64
     var orderItems []entity.OrderItem
-    var product entity.Product
-
     for _, item := range input.Items {
-        err := u.BuyerRepository.ProductRepository.FindByUUID(tx, &product, item.ProductUUID, "product_uuid")
-        if err != nil {
-            u.Log.WithError(err).Errorf("Product with ID %s not found", item.ProductUUID)
-            return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Product with ID %s not found", item.ProductUUID), nil)
+        var product entity.Product
+        if err := u.BuyerRepository.ProductRepository.FindByUUID(tx, &product, item.ProductUUID, "product_uuid"); err != nil {
+            u.Log.WithError(err).Errorf("Product with UUID %s not found in store %d", item.ProductUUID, storeID)
+            return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Product with UUID %s not found", item.ProductUUID), nil)
         }
+
         if product.Stock < item.Quantity {
             u.Log.Warnf("Product %s has insufficient stock", product.ProductName)
             return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Product %s has insufficient stock", product.ProductName), nil)
@@ -74,14 +91,12 @@ func (u *BuyerUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder
         })
     }
 
-    // Create order
     order := &entity.Order{
         OrderUUID:  u.UUIDHelper.Generate(),
         UserID:     input.UserID,
         Status:     "pending",
         TotalPrice: totalPrice,
         Items:      orderItems,
-        Payment:    nil,
     }
 
     if err := u.BuyerRepository.OrderRepository.Create(tx, order); err != nil {
@@ -89,7 +104,6 @@ func (u *BuyerUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder
         return nil, model.ErrInternalServer
     }
 
-    // Create payment
     payment := &entity.Payment{
         PaymentUUID: u.UUIDHelper.Generate(),
         OrderID:     order.ID,
@@ -102,7 +116,6 @@ func (u *BuyerUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder
         return nil, model.ErrInternalServer
     }
 
-    // Create shipping
     shipping := &entity.Shipping{
         ShippingUUID: u.UUIDHelper.Generate(),
         OrderID:      order.ID,
@@ -127,6 +140,7 @@ func (u *BuyerUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder
 
     return converter.OrderToResponse(order), nil
 }
+
 
 func (u *BuyerUseCase) GetOrders(ctx context.Context, request *model.SearchOrderRequest) ([]model.ListOrderResponse, int64, error) {
     if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {

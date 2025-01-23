@@ -28,6 +28,10 @@ func (c *BuyerController) CreateOrder(ctx *fiber.Ctx) error {
 		c.Logger.Warnf("Failed to parse request body: %+v", err)
 		return err
 	}
+	if len(request.Items) == 0 {
+        c.Logger.Warnf("Order items are empty")
+        return fiber.NewError(fiber.StatusBadRequest, "Order items cannot be empty")
+    }
 	response, err := c.UseCase.CreateOrder(ctx.UserContext(), request)
 	if err != nil {
 		c.Logger.Warnf("Failed to create order: %+v", err)

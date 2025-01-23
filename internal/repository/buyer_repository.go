@@ -15,6 +15,7 @@ type BuyerRepository struct {
 	ProductRepository *Repository[entity.Product]
 	PaymentRepository *Repository[entity.Payment]
 	ShippingRepository *Repository[entity.Shipping]
+	StoreRepository *Repository[entity.Store]
 	Log *logrus.Logger
 }
 
@@ -24,9 +25,43 @@ func NewBuyerRepository(log *logrus.Logger, db *gorm.DB) *BuyerRepository {
 		ProductRepository: &Repository[entity.Product]{DB: db},
 		PaymentRepository: &Repository[entity.Payment]{DB: db},
 		ShippingRepository: &Repository[entity.Shipping]{DB: db},
+		StoreRepository: &Repository[entity.Store]{DB: db},
 		Log: log,
 	}
 }
+
+func (r *BuyerRepository) FindByUUIDandStoreID(tx *gorm.DB, product *entity.Product, productUUID string, storeID uint) error {
+    return tx.Where("product_uuid = ? AND store_id = ?", productUUID, storeID).First(product).Error
+}
+
+func (r *BuyerRepository) FindStoreByProductUUIDs(tx *gorm.DB, productUUIDs []string) (uint, error) {
+    var storeID uint
+    rows, err := tx.Model(&entity.Product{}).
+        Select("store_id").
+        Where("product_uuid IN ?", productUUIDs).
+        Group("store_id").
+        Rows()
+    if err != nil {
+        return 0, err
+    }
+    defer rows.Close()
+
+    count := 0
+    for rows.Next() {
+        count++
+        if count > 1 {
+            return 0, model.ErrBadRequest
+        }
+        rows.Scan(&storeID)
+    }
+
+    if count == 0 {
+        return 0, gorm.ErrRecordNotFound
+    }
+
+    return storeID, nil
+}
+
 
 func (r *BuyerRepository) GetOrders(db *gorm.DB, request *model.SearchOrderRequest) ([]entity.Order, int64, error) {
 	filteredQuery := db.Model(&entity.Order{}).Scopes(r.FilterOrders(request))

@@ -99,47 +99,52 @@ func (r *SellerRepository) CheckProduct(db *gorm.DB, product *entity.Product, us
 }
 
 func (r *SellerRepository) GetOrder(db *gorm.DB, order_uuid string, store_id uint) (*entity.Order, error) {
-	var order entity.Order
-	if err := db.Preload("Items.Product", func(db *gorm.DB) *gorm.DB {
-		return db.Where("store_id = ?", store_id)
-	}).
-		Preload("Payment").
-		Preload("Shipping").
-		Where("order_uuid = ?", order_uuid).
-		Take(&order).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Order with UUID %s not found", order_uuid), nil)
-		}
-		return nil, err
-	}
+    var order entity.Order
 
-	return &order, nil
+    if err := db.Preload("Items.Product", func(db *gorm.DB) *gorm.DB {
+        return db.Where("store_id = ?", store_id)
+    }).
+        Preload("Payment").
+        Preload("Shipping").
+        Where("order_uuid = ?", order_uuid).
+        Joins("JOIN order_items ON order_items.order_id = orders.id").
+        Joins("JOIN products ON products.id = order_items.product_id").
+        Where("products.store_id = ?", store_id).
+        Take(&order).Error; err != nil {
+
+        if err == gorm.ErrRecordNotFound {
+            return nil, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("Order with UUID %s not found or store_id does not match", order_uuid), nil)
+        }
+        return nil, err
+    }
+
+    return &order, nil
 }
+
+
 
 func (r *SellerRepository) GetOrders(db *gorm.DB, request *model.SearchOrderRequestBySeller) ([]entity.Order, int64, error) {
     var orders []entity.Order
     var total int64
-    if err := db.Scopes(r.FilterOrders(request)).Preload("Items.Product").
-        Preload("Payment").
-        Where("id = ?", request.StoreID).
-        Find(&orders).
-        Count(&total).
-        Error; err != nil {
 
-        if err == gorm.ErrRecordNotFound {
-            return nil, 0, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("No orders found for store ID %d", request.StoreID), nil)
-        }
+    subquery := db.Model(&entity.OrderItem{}).
+        Select("DISTINCT order_id").
+        Joins("JOIN products ON order_items.product_id = products.id").
+        Where("products.store_id = ?", request.StoreID)
+
+    query := db.Model(&entity.Order{}).
+        Preload("Items.Product").
+        Preload("Payment").
+        Preload("Shipping").
+        Where("id IN (?)", subquery)
+
+    if request.Status != "" {
+        query = query.Where("status = ?", request.Status)
+    }
+
+    if err := query.Count(&total).Find(&orders).Error; err != nil {
         return nil, 0, err
     }
 
     return orders, total, nil
-}
-
-func (r *SellerRepository) FilterOrders(request *model.SearchOrderRequestBySeller) func(db *gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		if status := request.Status; status != "" {
-			db = db.Where("status = ?", status)
-		}
-		return db
-	}
 }

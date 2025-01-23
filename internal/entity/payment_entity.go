@@ -8,6 +8,6 @@ type Payment struct {
 	OrderID     uint    `gorm:"not null"`
 	Order       Order   `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Amount  	float64 `gorm:"not null"`
-	Status      string  `gorm:"type:enum('pending', 'paid');default:'pending';not null"`
+	Status      string  `gorm:"type:enum('pending', 'paid', 'cancel');default:'pending';not null"`
 	Method      string  `gorm:"type:enum('cash', 'transfer');not null"`
 }

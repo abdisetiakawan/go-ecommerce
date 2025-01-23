@@ -70,3 +70,20 @@ type GetOrderDetails struct {
 	UserID    uint   `json:"-"`
 	OrderUUID string `json:"-" validate:"required,uuid"`
 }
+
+type SearchOrderRequestBySeller struct {
+	Status  string `json:"-" validate:"omitempty,oneof=pending processing delivered canceled"`
+	UserID  uint   `json:"-"`
+	StoreID uint   `json:"-"`
+	Page    int    `json:"-"`
+	Limit   int    `json:"-"`
+}
+
+type OrdersResponseForSeller struct {
+	OrderUUID  string              `json:"order_uuid"`
+	TotalPrice float64             `json:"total_price"`
+	Status     string              `json:"status"`
+	Items      []OrderItemResponse `json:"items"`
+	Payment    PaymentResponse     `json:"payment"`
+	CreatedAt  string              `json:"created_at"`
+}

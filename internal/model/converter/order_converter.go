@@ -44,3 +44,27 @@ func OrdersToResponse(orders *entity.Order) *model.ListOrderResponse {
         Status: orders.Status,
     }
 }
+
+func OrderToResponseForSeller(order *entity.Order) *model.OrdersResponseForSeller {
+    items := make([]model.OrderItemResponse, len(order.Items))
+
+    for i, item := range order.Items {
+        items[i] = model.OrderItemResponse{
+            OrderItemUuid: item.OrderItemUUID,
+            Quantity:  item.Quantity,
+        }
+    }
+
+    return &model.OrdersResponseForSeller{
+        OrderUUID:  order.OrderUUID,
+        TotalPrice: order.TotalPrice,
+        Status:     order.Status,
+        Items:      items,
+        Payment: model.PaymentResponse{
+            PaymentUUID:  order.Payment.PaymentUUID,
+            PaymentMethod: order.Payment.Method,
+            Status:        order.Payment.Status,
+        },
+        CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
+    }
+}

@@ -233,3 +233,28 @@ func (u *StoreUseCase) GetOrder(ctx context.Context, request *model.GetOrderDeta
 	}
 	return converter.OrderToResponse(order), nil
 }
+
+func (u *StoreUseCase) GetOrders(ctx context.Context, request *model.SearchOrderRequestBySeller) ([]model.OrdersResponseForSeller, int64, error) {
+	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+		return nil, 0, err
+	}
+	var store entity.Store
+	if err := u.SellerRepository.StoreRepository.FindByUserID(u.DB, &store, request.UserID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.Warnf("Store not found")
+			return nil, 0, model.ErrStoreNotFound
+		}
+		return nil, 0, err
+	}
+	request.StoreID = store.ID
+	orders, total, err := u.SellerRepository.GetOrders(u.DB, request)
+	if err != nil {
+		u.Log.WithError(err).Errorf("Failed to get orders")
+		return nil, 0, err
+	}
+	responses := make([]model.OrdersResponseForSeller, len(orders))
+	for i, order := range orders {
+		responses[i] = *converter.OrderToResponseForSeller(&order)
+	}
+	return responses, total, nil
+}

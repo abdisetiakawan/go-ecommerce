@@ -18,9 +18,7 @@ func SetupSellerRoute(r *RouteConfig, app *fiber.App, sellerController *seller.S
 	sellerGroup.Delete("/products/:product_uuid", sellerController.DeleteProduct)
 	// Todo: Order Management:
 	// Todo: Get Orders
-	/*
 	sellerGroup.Get("/orders", sellerController.GetOrders)
-	*/
 	// Todo: Get Order by ID
 	sellerGroup.Get("/orders/:order_uuid", sellerController.GetOrderById)
 	// Todo : Update shipping status:

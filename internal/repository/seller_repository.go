@@ -115,3 +115,32 @@ func (r *SellerRepository) GetOrder(db *gorm.DB, order_uuid string, store_id uin
 
 	return &order, nil
 }
+
+func (r *SellerRepository) GetOrders(db *gorm.DB, request *model.SearchOrderRequestBySeller) ([]entity.Order, int64, error) {
+    var orders []entity.Order
+    var total int64
+    if err := db.Scopes(r.FilterOrders(request)).Preload("Items.Product").
+        Preload("Payment").
+        Preload("Shipping").
+        Where("id = ?", request.StoreID).
+        Find(&orders).
+        Count(&total).
+        Error; err != nil {
+
+        if err == gorm.ErrRecordNotFound {
+            return nil, 0, model.NewApiError(fiber.StatusNotFound, fmt.Sprintf("No orders found for store ID %d", request.StoreID), nil)
+        }
+        return nil, 0, err
+    }
+
+    return orders, total, nil
+}
+
+func (r *SellerRepository) FilterOrders(request *model.SearchOrderRequestBySeller) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if status := request.Status; status != "" {
+			db = db.Where("status = ?", status)
+		}
+		return db
+	}
+}

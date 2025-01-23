@@ -87,3 +87,8 @@ type OrdersResponseForSeller struct {
 	Payment    PaymentResponse     `json:"payment"`
 	CreatedAt  string              `json:"created_at"`
 }
+
+type CancelOrderRequest struct {
+	OrderUUID string `json:"-" validate:"required,uuid"`
+	UserID    uint   `json:"-"`
+}

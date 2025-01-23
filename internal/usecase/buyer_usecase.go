@@ -169,3 +169,67 @@ func(u *BuyerUseCase) GetOrder(ctx context.Context, request *model.GetOrderDetai
     }
     return converter.OrderToResponse(order), nil
 }
+
+func (u *BuyerUseCase) CancelOrder(ctx context.Context, request *model.CancelOrderRequest) (*model.OrderResponse, error) {
+    tx := u.DB.WithContext(ctx).Begin()
+    defer tx.Rollback()
+
+    if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+        return nil, err
+    }
+    
+    order, err := u.BuyerRepository.GetOrder(tx, &model.GetOrderDetails{
+        OrderUUID: request.OrderUUID,
+        UserID:    request.UserID,
+    })
+    if err != nil {
+        u.Log.WithError(err).Error("Failed to get order")
+        return nil, err
+    }
+
+    if order.Status == "completed" || order.Status == "cancelled" || order.Status == "shipped" || order.Status == "processed" {
+        return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Order with ID %s cannot be cancelled, current status is %s", request.OrderUUID, order.Status), nil)
+    }
+    
+    order.Status = "cancelled"
+    if err := u.BuyerRepository.OrderRepository.Update(tx, order); err != nil {
+        u.Log.WithError(err).Error("Failed to update order")
+        return nil, model.ErrInternalServer
+    }
+
+    if order.Payment != nil {
+        order.Payment.Status = "cancelled"
+        if err := u.BuyerRepository.PaymentRepository.Update(tx, order.Payment); err != nil {
+            u.Log.WithError(err).Error("Failed to update payment")
+            return nil, model.ErrInternalServer
+        }
+    }
+
+    if order.Shipping != nil {
+        order.Shipping.Status = "cancelled"
+        if err := u.BuyerRepository.ShippingRepository.Update(tx, order.Shipping); err != nil {
+            u.Log.WithError(err).Error("Failed to update shipping")
+            return nil, model.ErrInternalServer
+        }
+    }
+
+    for _, item := range order.Items {
+        var product entity.Product
+        if err := u.BuyerRepository.ProductRepository.FindByID(tx, &product, item.ProductID); err != nil {
+            u.Log.WithError(err).Error("Failed to find product")
+            return nil, model.ErrInternalServer
+        }
+        product.Stock += item.Quantity
+        if err := u.BuyerRepository.ProductRepository.Update(tx, &product); err != nil {
+            u.Log.WithError(err).Error("Failed to update product")
+            return nil, model.ErrInternalServer
+        }
+    }
+    
+    if err := tx.Commit().Error; err != nil {
+        u.Log.WithError(err).Error("Failed to commit transaction")
+        return nil, model.ErrInternalServer
+    }
+    
+    return converter.OrderToResponse(order), nil
+}

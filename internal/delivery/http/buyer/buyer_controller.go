@@ -77,3 +77,17 @@ func (c *BuyerController) GetOrder(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get order", fiber.StatusOK, nil, nil))
 }
+
+func (c *BuyerController) CancelOrder(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+	request := &model.CancelOrderRequest{
+		UserID: auth.ID,
+		OrderUUID: ctx.Params("order_uuid"),
+	}
+	response, err := c.UseCase.CancelOrder(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to cancel order: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully cancel order", fiber.StatusOK, nil, nil))
+}

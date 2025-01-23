@@ -11,4 +11,6 @@ func SetupBuyerRoute(r *RouteConfig, app *fiber.App, buyerController *buyer.Buye
 	buyerGroup.Get("/orders", buyerController.SearchOrders)
 	buyerGroup.Get("/orders/:order_uuid", buyerController.GetOrder)
 	buyerGroup.Post("/orders", buyerController.CreateOrder)
+	buyerGroup.Patch("/orders/:order_uuid/cancel", buyerController.CancelOrder)
+	buyerGroup.Patch("/orders/:order_uuid/checkout", buyerController.CheckoutOrder)
 }

@@ -233,3 +233,43 @@ func (u *BuyerUseCase) CancelOrder(ctx context.Context, request *model.CancelOrd
     
     return converter.OrderToResponse(order), nil
 }
+
+func (u *BuyerUseCase) CheckoutOrder(ctx context.Context, request *model.CheckoutOrderRequest) (*model.OrderResponse, error) {
+    tx := u.DB.WithContext(ctx).Begin()
+    defer tx.Rollback()
+
+    if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
+        return nil, err
+    }
+
+    order, err := u.BuyerRepository.GetOrder(tx, &model.GetOrderDetails{
+        OrderUUID: request.OrderUUID,
+        UserID:    request.UserID,
+    })
+    if err != nil {
+        u.Log.WithError(err).Error("Failed to get order")
+        return nil, err
+    }
+
+    if order.Status != "pending" {
+        return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Order with ID %s cannot be checked out, current status is %s", request.OrderUUID, order.Status), nil)
+    }
+    order.Status = "processed"
+    if err := u.BuyerRepository.OrderRepository.Update(tx, order); err != nil {
+        u.Log.WithError(err).Error("Failed to update order")
+        return nil, model.ErrInternalServer
+    }
+    if order.Payment != nil {
+        order.Payment.Status = "paid"
+        if err := u.BuyerRepository.PaymentRepository.Update(tx, order.Payment); err != nil {
+            u.Log.WithError(err).Error("Failed to update payment")
+            return nil, model.ErrInternalServer
+        }
+    }
+
+    if err := tx.Commit().Error; err != nil {
+        u.Log.WithError(err).Error("Failed to commit transaction")
+        return nil, model.ErrInternalServer
+    }
+    return converter.OrderToResponse(order), nil
+}

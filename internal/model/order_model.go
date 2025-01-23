@@ -92,3 +92,8 @@ type CancelOrderRequest struct {
 	OrderUUID string `json:"-" validate:"required,uuid"`
 	UserID    uint   `json:"-"`
 }
+
+type CheckoutOrderRequest struct {
+	OrderUUID string `json:"-" validate:"required,uuid"`
+	UserID    uint   `json:"-"`
+}

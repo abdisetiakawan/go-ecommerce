@@ -91,3 +91,17 @@ func (c *BuyerController) CancelOrder(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully cancel order", fiber.StatusOK, nil, nil))
 }
+
+func (c *BuyerController) CheckoutOrder(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+	request := &model.CheckoutOrderRequest{
+		UserID: auth.ID,
+		OrderUUID: ctx.Params("order_uuid"),
+	}
+	response, err := c.UseCase.CheckoutOrder(ctx.UserContext(), request)
+	if err != nil {
+		c.Logger.Warnf("Failed to checkout order: %+v", err)
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully checkout order", fiber.StatusOK, nil, nil))
+}

@@ -1,7 +1,7 @@
 package route
 
 import (
-	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http"
+	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/auth"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/buyer"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/seller"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/user"
@@ -10,7 +10,7 @@ import (
 
 type RouteConfig struct {
 	App *fiber.App
-	AuthController *http.AuthController
+	AuthController *auth.AuthController
 	SellerController *seller.SellerController
 	BuyerController *buyer.BuyerController
 	UserController *user.UserController

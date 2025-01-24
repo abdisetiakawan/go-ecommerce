@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http"
+	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/auth"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/buyer"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/seller"
@@ -30,7 +30,7 @@ type BootstrapConfig struct {
 func Bootstrap(config *BootstrapConfig) {
 	authRepository := repository.NewAuthRepository(config.Log)
 	authUseCase := usecase.NewAuthUseCase(config.DB, config.Log, config.Validate, authRepository, config.Jwt, config.UserUUID)
-	authController := http.NewAuthController(authUseCase, config.Log)
+	authController := auth.NewAuthController(authUseCase, config.Log)
 
 	sellerRepository := repository.NewSellerRepository(config.Log, config.DB)
 	sellerUseCase := usecase.NewSellerUseCase(config.DB, config.Log, config.Validate, sellerRepository, config.UserUUID)

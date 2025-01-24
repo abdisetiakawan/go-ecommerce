@@ -1,4 +1,4 @@
-package http
+package auth
 
 import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"

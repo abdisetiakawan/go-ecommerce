@@ -4,17 +4,17 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
-	"github.com/abdisetiakawan/go-ecommerce/internal/usecase"
+	usecase "github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 )
 
 type UserController struct {
-	UseCase *usecase.UserUseCase
+	UseCase usecase.UserUseCase
 	Logger  *logrus.Logger
 }
 
-func NewUserController(usecase *usecase.UserUseCase, logger *logrus.Logger) *UserController {
+func NewUserController(usecase usecase.UserUseCase, logger *logrus.Logger) *UserController {
 	return &UserController{
 		UseCase: usecase,
 		Logger:  logger,

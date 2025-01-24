@@ -9,6 +9,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
+	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber"
 	"github.com/sirupsen/logrus"
@@ -23,7 +24,7 @@ type BuyerUseCase struct {
     UUIDHelper *helper.UUIDHelper
 }
 
-func NewBuyerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, buyerRepos *repository.BuyerRepository, uuid *helper.UUIDHelper) *BuyerUseCase {
+func NewBuyerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, buyerRepos *repository.BuyerRepository, uuid *helper.UUIDHelper) interfaces.BuyerUseCase {
     return &BuyerUseCase{
         DB: db,
         Log: log,

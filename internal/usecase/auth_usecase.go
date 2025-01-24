@@ -8,6 +8,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
+	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
@@ -23,7 +24,7 @@ type AuthUseCase struct {
 	UUIDHelper *helper.UUIDHelper
 }
 
-func NewAuthUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, authRepos *repository.AuthRepository, jwt *helper.JwtHelper, uuid *helper.UUIDHelper) *AuthUseCase {
+func NewAuthUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, authRepos *repository.AuthRepository, jwt *helper.JwtHelper, uuid *helper.UUIDHelper) interfaces.AuthUseCase {
 	return &AuthUseCase{
 		DB: db,
 		Log: log,

@@ -9,13 +9,14 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
+	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
-type StoreUseCase struct {
+type SellerUseCase struct {
 	DB              *gorm.DB
 	Log             *logrus.Logger
 	Validate        *validator.Validate
@@ -23,8 +24,8 @@ type StoreUseCase struct {
 	UUIDHelper *helper.UUIDHelper
 }
 
-func NewSellerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, sellerRepos *repository.SellerRepository, uuid *helper.UUIDHelper) *StoreUseCase {
-	return &StoreUseCase{
+func NewSellerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, sellerRepos *repository.SellerRepository, uuid *helper.UUIDHelper) interfaces.SellerUseCase {
+	return &SellerUseCase{
 		DB:              db,
 		Log:             log,
 		Validate:        validate,
@@ -33,7 +34,7 @@ func NewSellerUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valid
 	}
 }
 
-func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore) (*model.StoreResponse, error) {
+func (u *SellerUseCase) Create(ctx context.Context, request *model.RegisterStore) (*model.StoreResponse, error) {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func (u *StoreUseCase) Create(ctx context.Context, request *model.RegisterStore)
 	return converter.StoreToResponse(store), nil
 }
 
-func (u *StoreUseCase) CreateProduct(ctx context.Context, request *model.RegisterProduct) (*model.ProductResponse, error) {
+func (u *SellerUseCase) CreateProduct(ctx context.Context, request *model.RegisterProduct) (*model.ProductResponse, error) {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return nil, err
 	}
@@ -92,7 +93,7 @@ func (u *StoreUseCase) CreateProduct(ctx context.Context, request *model.Registe
 	return converter.ProductToResponse(product), nil
 }
 
-func (u *StoreUseCase) GetStore(ctx context.Context, id uint) (*model.StoreResponse, error) {
+func (u *SellerUseCase) GetStore(ctx context.Context, id uint) (*model.StoreResponse, error) {
 	var store entity.Store
 	if err := u.SellerRepository.StoreRepository.FindByUserID(u.DB, &store, id); err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -105,7 +106,7 @@ func (u *StoreUseCase) GetStore(ctx context.Context, id uint) (*model.StoreRespo
 	return converter.StoreToResponse(&store), nil
 }
 
-func (u *StoreUseCase) Update(ctx context.Context, request *model.UpdateStore) (*model.StoreResponse, error) {
+func (u *SellerUseCase) Update(ctx context.Context, request *model.UpdateStore) (*model.StoreResponse, error) {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return nil, err
 	}
@@ -131,7 +132,7 @@ func (u *StoreUseCase) Update(ctx context.Context, request *model.UpdateStore) (
 	return converter.StoreToResponse(&store), nil
 }
 
-func (u *StoreUseCase) GetProducts (ctx context.Context, request *model.GetProductsRequest) ([]model.ProductResponse, int64, error) {
+func (u *SellerUseCase) GetProducts (ctx context.Context, request *model.GetProductsRequest) ([]model.ProductResponse, int64, error) {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return nil, 0, err
 	}
@@ -147,7 +148,7 @@ func (u *StoreUseCase) GetProducts (ctx context.Context, request *model.GetProdu
 	return responses, total, nil
 }
 
-func (u *StoreUseCase) GetProduct (ctx context.Context, request *model.GetProductRequest) (*model.ProductResponse, error) {
+func (u *SellerUseCase) GetProduct (ctx context.Context, request *model.GetProductRequest) (*model.ProductResponse, error) {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return nil, err
 	}
@@ -159,7 +160,7 @@ func (u *StoreUseCase) GetProduct (ctx context.Context, request *model.GetProduc
 	return converter.ProductToResponse(response), nil
 }
 
-func (u *StoreUseCase) UpdateProduct (ctx context.Context, request *model.UpdateProduct) (*model.ProductResponse, error) {
+func (u *SellerUseCase) UpdateProduct (ctx context.Context, request *model.UpdateProduct) (*model.ProductResponse, error) {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return nil, err
 	}
@@ -194,7 +195,7 @@ func (u *StoreUseCase) UpdateProduct (ctx context.Context, request *model.Update
 	return converter.ProductToResponse(&product), nil
 }
 
-func (u *StoreUseCase) DeleteProduct (ctx context.Context, request *model.DeleteProductRequest) error {
+func (u *SellerUseCase) DeleteProduct (ctx context.Context, request *model.DeleteProductRequest) error {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return err
 	}
@@ -214,7 +215,7 @@ func (u *StoreUseCase) DeleteProduct (ctx context.Context, request *model.Delete
 	return nil
 }
 
-func (u *StoreUseCase) GetOrder(ctx context.Context, request *model.GetOrderDetails) (*model.OrderResponse, error) {
+func (u *SellerUseCase) GetOrder(ctx context.Context, request *model.GetOrderDetails) (*model.OrderResponse, error) {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return nil, err
 	}
@@ -234,7 +235,7 @@ func (u *StoreUseCase) GetOrder(ctx context.Context, request *model.GetOrderDeta
 	return converter.OrderToResponse(order), nil
 }
 
-func (u *StoreUseCase) GetOrders(ctx context.Context, request *model.SearchOrderRequestBySeller) ([]model.OrdersResponseForSeller, int64, error) {
+func (u *SellerUseCase) GetOrders(ctx context.Context, request *model.SearchOrderRequestBySeller) ([]model.OrdersResponseForSeller, int64, error) {
 	if err := helper.ValidateStruct(u.Validate, u.Log, request); err != nil {
 		return nil, 0, err
 	}
@@ -259,7 +260,7 @@ func (u *StoreUseCase) GetOrders(ctx context.Context, request *model.SearchOrder
 	return responses, total, nil
 }
 
-func (c *StoreUseCase) UpdateShippingStatus(ctx context.Context, request *model.UpdateShippingStatusRequest) (*model.OrderResponse, error) {
+func (c *SellerUseCase) UpdateShippingStatus(ctx context.Context, request *model.UpdateShippingStatusRequest) (*model.OrderResponse, error) {
     tx := c.DB.WithContext(ctx).Begin()
     defer tx.Rollback()
 

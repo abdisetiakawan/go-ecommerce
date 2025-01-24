@@ -3,17 +3,17 @@ package buyer
 import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
-	"github.com/abdisetiakawan/go-ecommerce/internal/usecase"
+	usecase "github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 )
 
 type BuyerController struct {
-	UseCase *usecase.BuyerUseCase
+	UseCase usecase.BuyerUseCase
 	Logger  *logrus.Logger
 }
 
-func NewBuyerController(usecase *usecase.BuyerUseCase, logger *logrus.Logger) *BuyerController {
+func NewBuyerController(usecase usecase.BuyerUseCase, logger *logrus.Logger) *BuyerController {
 	return &BuyerController{
 		UseCase: usecase,
 		Logger:  logger,

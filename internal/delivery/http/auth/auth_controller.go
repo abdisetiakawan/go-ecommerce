@@ -3,17 +3,17 @@ package auth
 import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
-	"github.com/abdisetiakawan/go-ecommerce/internal/usecase"
+	usecase "github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 )
 
 type AuthController struct {
-	UseCase *usecase.AuthUseCase
+	UseCase usecase.AuthUseCase
 	Logger *logrus.Logger
 }
 
-func NewAuthController(usecase *usecase.AuthUseCase, logger *logrus.Logger) *AuthController {
+func NewAuthController(usecase usecase.AuthUseCase, logger *logrus.Logger) *AuthController {
 	return &AuthController{
 		UseCase: usecase,
 		Logger: logger,

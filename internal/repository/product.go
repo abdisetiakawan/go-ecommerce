@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
+	"github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"gorm.io/gorm"
 )
 
@@ -10,7 +11,7 @@ type ProductRepository struct {
 	DB *gorm.DB
 }
 
-func NewProductRepository(DB *gorm.DB) *ProductRepository {
+func NewProductRepository(DB *gorm.DB) interfaces.ProductRepository {
 	return &ProductRepository{DB}
 }
 

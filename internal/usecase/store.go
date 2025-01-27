@@ -7,7 +7,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
-	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
+	repo "github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -18,11 +18,11 @@ type StoreUseCase struct {
 	db *gorm.DB
 	log *logrus.Logger
 	val *validator.Validate
-	storeRepo *repository.StoreRepository
+	storeRepo repo.StoreRepository
 	uuid *helper.UUIDHelper
 }
 
-func NewStoreUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, storeRepo *repository.StoreRepository, uuid *helper.UUIDHelper) interfaces.StoreUseCase {
+func NewStoreUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper) interfaces.StoreUseCase {
 	return &StoreUseCase{
 		db: db,
 		log: log,

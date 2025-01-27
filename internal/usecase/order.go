@@ -8,7 +8,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
-	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
+	repo "github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber"
@@ -20,15 +20,15 @@ type OrderUseCase struct {
 	db        *gorm.DB
 	log       *logrus.Logger
 	val       *validator.Validate
-	orderRepo *repository.OrderRepository
-    productRepo *repository.ProductRepository
-    paymentRepo *repository.PaymentRepository
-    shippingRepo *repository.ShippingRepository
-    storeRepo *repository.StoreRepository
+	orderRepo repo.OrderRepository
+    productRepo repo.ProductRepository
+    paymentRepo repo.PaymentRepository
+    shippingRepo repo.ShippingRepository
+    storeRepo repo.StoreRepository
 	uuid      *helper.UUIDHelper
 }
 
-func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, orderRepo *repository.OrderRepository, productRepo *repository.ProductRepository, paymentRepo *repository.PaymentRepository, shippingRepo *repository.ShippingRepository, storeRepo *repository.StoreRepository, uuid *helper.UUIDHelper) interfaces.OrderUseCase {
+func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, paymentRepo repo.PaymentRepository, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper) interfaces.OrderUseCase {
 	return &OrderUseCase{
 		db:        db,
 		log:       log,

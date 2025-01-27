@@ -7,7 +7,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
-	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
+	repo "github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -18,10 +18,10 @@ type ProfileUseCase struct {
 	db *gorm.DB
 	log *logrus.Logger
 	val *validator.Validate
-	profileRepo *repository.ProfileRepository
+	profileRepo repo.ProfileRepository
 }
 
-func NewProfileUseCase(db *gorm.DB, log *logrus.Logger, val *validator.Validate, profileRepo *repository.ProfileRepository) interfaces.ProfileUseCase {
+func NewProfileUseCase(db *gorm.DB, log *logrus.Logger, val *validator.Validate, profileRepo repo.ProfileRepository) interfaces.ProfileUseCase {
 	return &ProfileUseCase{
 		db: db,
 		log: log,

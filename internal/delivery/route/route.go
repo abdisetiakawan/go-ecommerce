@@ -1,20 +1,19 @@
 package route
 
 import (
-	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/auth"
-	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/buyer"
+	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
-	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/seller"
-	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/user"
 	"github.com/gofiber/fiber/v2"
 )
 
 type RouteConfig struct {
 	App               *fiber.App
-	AuthController    *auth.AuthController
-	SellerController  *seller.SellerController
-	BuyerController   *buyer.BuyerController
-	UserController    *user.UserController
+	UserController    *http.UserController
+	ProfileController *http.ProfileController
+	OrderController   *http.OrderController
+	StoreController   *http.StoreController
+	ProductController *http.ProductController
+	ShippingController *http.ShippingController
 	AuthMiddleware    fiber.Handler
 }
 
@@ -28,17 +27,17 @@ func (rc *RouteConfig) Setup() {
 func (rc *RouteConfig) setupAuthRoutes() {
 	authGroup := rc.App.Group("/api/auth")
 	{
-		authGroup.Post("/register", rc.AuthController.Register)
-		authGroup.Post("/login", rc.AuthController.Login)
+		authGroup.Post("/register", rc.UserController.Register)
+		authGroup.Post("/login", rc.UserController.Login)
 	}
 }
 
 func (rc *RouteConfig) setupUserRoutes() {
 	userGroup := rc.App.Group("/api/user", rc.AuthMiddleware)
 	{
-		userGroup.Post("/profile", rc.UserController.CreateProfile)
-		userGroup.Get("/profile", rc.UserController.GetProfile)
-		userGroup.Put("/profile", rc.UserController.UpdateProfile)
+		userGroup.Post("/profile", rc.ProfileController.CreateProfile)
+		userGroup.Get("/profile", rc.ProfileController.GetProfile)
+		userGroup.Put("/profile", rc.ProfileController.UpdateProfile)
 		userGroup.Patch("/password", rc.UserController.ChangePassword)
 	}
 }
@@ -49,11 +48,11 @@ func (rc *RouteConfig) setupBuyerRoutes() {
 		// Order Routes
 		orderGroup := buyerGroup.Group("/orders")
 		{
-			orderGroup.Get("", rc.BuyerController.SearchOrders)
-			orderGroup.Get("/:order_uuid", rc.BuyerController.GetOrder)
-			orderGroup.Post("", rc.BuyerController.CreateOrder)
-			orderGroup.Patch("/:order_uuid/cancel", rc.BuyerController.CancelOrder)
-			orderGroup.Patch("/:order_uuid/checkout", rc.BuyerController.CheckoutOrder)
+			orderGroup.Get("", rc.OrderController.GetOrdersByBuyer)
+			orderGroup.Get("/:order_uuid", rc.OrderController.GetOrderByIdByBuyer)
+			orderGroup.Post("", rc.OrderController.CreateOrder)
+			orderGroup.Patch("/:order_uuid/cancel", rc.OrderController.CancelOrder)
+			orderGroup.Patch("/:order_uuid/checkout", rc.OrderController.CheckoutOrder)
 		}
 	}
 }
@@ -64,27 +63,27 @@ func (rc *RouteConfig) setupSellerRoutes() {
 		// Store Routes
 		storeGroup := sellerGroup.Group("/store")
 		{
-			storeGroup.Post("", rc.SellerController.RegisterStore)
-			storeGroup.Get("", rc.SellerController.GetStore)
-			storeGroup.Put("", rc.SellerController.UpdateStore)
+			storeGroup.Post("", rc.StoreController.RegisterStore)
+			storeGroup.Get("", rc.StoreController.GetStore)
+			storeGroup.Put("", rc.StoreController.UpdateStore)
 		}
 
 		// Product Routes
 		productGroup := sellerGroup.Group("/products")
 		{
-			productGroup.Post("", rc.SellerController.RegisterProduct)
-			productGroup.Get("", rc.SellerController.GetProducts)
-			productGroup.Get("/:product_uuid", rc.SellerController.GetProductById)
-			productGroup.Put("/:product_uuid", rc.SellerController.UpdateProduct)
-			productGroup.Delete("/:product_uuid", rc.SellerController.DeleteProduct)
+			productGroup.Post("", rc.ProductController.RegisterProduct)
+			productGroup.Get("", rc.ProductController.GetProducts)
+			productGroup.Get("/:product_uuid", rc.ProductController.GetProductById)
+			productGroup.Put("/:product_uuid", rc.ProductController.UpdateProduct)
+			productGroup.Delete("/:product_uuid", rc.ProductController.DeleteProduct)
 		}
 
 		// Order Routes
 		orderGroup := sellerGroup.Group("/orders")
 		{
-			orderGroup.Get("", rc.SellerController.GetOrders)
-			orderGroup.Get("/:order_uuid", rc.SellerController.GetOrderById)
-			orderGroup.Patch("/:order_uuid/shipping", rc.SellerController.UpdateShippingStatus)
+			orderGroup.Get("", rc.OrderController.GetOrdersBySeller)
+			orderGroup.Get("/:order_uuid", rc.OrderController.GetOrderByIdSeller)
+			orderGroup.Patch("/:order_uuid/shipping", rc.ShippingController.UpdateShippingStatus)
 		}
 	}
 }

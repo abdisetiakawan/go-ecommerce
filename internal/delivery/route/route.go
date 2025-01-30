@@ -1,6 +1,8 @@
 package route
 
 import (
+	"time"
+
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/gofiber/fiber/v2"
@@ -25,7 +27,8 @@ func (rc *RouteConfig) Setup() {
 }
 
 func (rc *RouteConfig) setupAuthRoutes() {
-	authGroup := rc.App.Group("/api/auth")
+	authRateLimiter := middleware.NewDynamicRateLimiter(5, 2*time.Minute) 
+	authGroup := rc.App.Group("/api/auth", authRateLimiter)
 	{
 		authGroup.Post("/register", rc.UserController.Register)
 		authGroup.Post("/login", rc.UserController.Login)
@@ -33,7 +36,8 @@ func (rc *RouteConfig) setupAuthRoutes() {
 }
 
 func (rc *RouteConfig) setupUserRoutes() {
-	userGroup := rc.App.Group("/api/user", rc.AuthMiddleware)
+	userRateLimiter := middleware.NewUserRateLimiter(40, time.Minute)
+	userGroup := rc.App.Group("/api/user", rc.AuthMiddleware, userRateLimiter)
 	{
 		userGroup.Post("/profile", rc.ProfileController.CreateProfile)
 		userGroup.Get("/profile", rc.ProfileController.GetProfile)
@@ -43,7 +47,8 @@ func (rc *RouteConfig) setupUserRoutes() {
 }
 
 func (rc *RouteConfig) setupBuyerRoutes() {
-	buyerGroup := rc.App.Group("/api/buyer", rc.AuthMiddleware, middleware.BuyerOnly())
+	buyerRateLimiter := middleware.NewBuyerRateLimiter(30, time.Minute)
+	buyerGroup := rc.App.Group("/api/buyer", rc.AuthMiddleware, middleware.BuyerOnly(), buyerRateLimiter)
 	{
 		// Order Routes
 		orderGroup := buyerGroup.Group("/orders")
@@ -58,7 +63,8 @@ func (rc *RouteConfig) setupBuyerRoutes() {
 }
 
 func (rc *RouteConfig) setupSellerRoutes() {
-	sellerGroup := rc.App.Group("/api/seller", rc.AuthMiddleware, middleware.SellerOnly())
+	sellerRateLimiter := middleware.NewSellerRateLimiter(50, time.Minute)
+	sellerGroup := rc.App.Group("/api/seller", rc.AuthMiddleware, middleware.SellerOnly(), sellerRateLimiter)
 	{
 		// Store Routes
 		storeGroup := sellerGroup.Group("/store")

@@ -5,18 +5,15 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/gofiber/fiber/v2"
-	"github.com/sirupsen/logrus"
 )
 
 type OrderController struct {
 	uc  interfaces.OrderUseCase
-	log *logrus.Logger
 }
 
-func NewOrderController(usecase interfaces.OrderUseCase, logger *logrus.Logger) *OrderController {
+func NewOrderController(usecase interfaces.OrderUseCase) *OrderController {
 	return &OrderController{
 		uc:  usecase,
-		log: logger,
 	}
 }
 
@@ -25,16 +22,13 @@ func (c *OrderController) CreateOrder(ctx *fiber.Ctx) error {
 	request := new(model.CreateOrder)
 	request.UserID = auth.ID
 	if err := ctx.BodyParser(request); err != nil {
-		c.log.Warnf("Failed to parse request body: %+v", err)
 		return err
 	}
 	if len(request.Items) == 0 {
-		c.log.Warnf("Order items are empty")
 		return fiber.NewError(fiber.StatusBadRequest, "Order items cannot be empty")
 	}
 	response, err := c.uc.CreateOrder(ctx.UserContext(), request)
 	if err != nil {
-		c.log.Warnf("Failed to create order: %+v", err)
 		return err
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully created order", fiber.StatusCreated, nil, nil))
@@ -50,7 +44,6 @@ func (c *OrderController) GetOrdersByBuyer(ctx *fiber.Ctx) error {
 	}
 	response, total, err := c.uc.GetOrdersByBuyer(ctx.UserContext(), request)
 	if err != nil {
-		c.log.Warnf("Failed to get orders: %+v", err)
 		return err
 	}
 	paging := &model.PageMetadata{
@@ -71,7 +64,6 @@ func (c *OrderController) GetOrderByIdByBuyer(ctx *fiber.Ctx) error {
 	}
 	response, err := c.uc.GetOrderByIdByBuyer(ctx.UserContext(), request)
 	if err != nil {
-		c.log.Warnf("Failed to get order: %+v", err)
 		return err
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get order", fiber.StatusOK, nil, nil))
@@ -85,7 +77,6 @@ func (c *OrderController) CancelOrder(ctx *fiber.Ctx) error {
 	}
 	response, err := c.uc.CancelOrder(ctx.UserContext(), request)
 	if err != nil {
-		c.log.Warnf("Failed to cancel order: %+v", err)
 		return err
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully cancel order", fiber.StatusOK, nil, nil))
@@ -99,7 +90,6 @@ func (c *OrderController) CheckoutOrder(ctx *fiber.Ctx) error {
 	}
 	response, err := c.uc.CheckoutOrder(ctx.UserContext(), request)
 	if err != nil {
-		c.log.Warnf("Failed to checkout order: %+v", err)
 		return err
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully checkout order", fiber.StatusOK, nil, nil))

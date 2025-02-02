@@ -40,12 +40,12 @@ func Bootstrap(config *BootstrapConfig) {
 	storeUseCase := usecase.NewStoreUseCase(config.DB, config.Log, config.Validate, storeRepository, config.UserUUID)
 	shippingUseCase := usecase.NewShippingUseCase(config.DB, config.Log, config.Validate, shippingRepository, storeRepository, orderRepository, config.UserUUID)
 	
-	userController := http.NewUserController(userUseCase, config.Log)
-	profileController := http.NewProfileController(profileUseCase, config.Log)
-	orderController := http.NewOrderController(orderUseCase, config.Log)
-	productController := http.NewProductController(productUseCase, config.Log)
-	storeController := http.NewStoreController(storeUseCase, config.Log)
-	shippingController := http.NewShippingController(shippingUseCase, config.Log)
+	userController := http.NewUserController(userUseCase)
+	profileController := http.NewProfileController(profileUseCase)
+	orderController := http.NewOrderController(orderUseCase)
+	productController := http.NewProductController(productUseCase)
+	storeController := http.NewStoreController(storeUseCase)
+	shippingController := http.NewShippingController(shippingUseCase)
 
 	AuthMiddleware := middleware.NewAuth(config.Config)
 	routeConfig := &route.RouteConfig{

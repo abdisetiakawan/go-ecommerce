@@ -6,18 +6,15 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/gofiber/fiber/v2"
-	"github.com/sirupsen/logrus"
 )
 
 type ProductController struct {
 	uc  interfaces.ProductUseCase
-	log *logrus.Logger
 }
 
-func NewProductController(usecase interfaces.ProductUseCase, logger *logrus.Logger) *ProductController {
+func NewProductController(usecase interfaces.ProductUseCase) *ProductController {
 	return &ProductController{
 		uc: usecase,
-		log:         logger,
 	}
 }
 
@@ -34,7 +31,6 @@ func (c *ProductController) GetProducts(ctx *fiber.Ctx) error {
 	}
 	response, total, err := c.uc.GetProducts(ctx.UserContext(), request)
 	if err != nil {
-		c.log.Warnf("Failed to get products: %+v", err)
 		return err
 	}
 	paging := &model.PageMetadata{
@@ -54,7 +50,6 @@ func (c *ProductController) GetProductById(ctx *fiber.Ctx) error {
 	}
 	response, err := c.uc.GetProductById(ctx.UserContext(), request)
 	if err != nil {
-		c.log.Warnf("Failed to get product: %+v", err)
 		return err
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get product", fiber.StatusOK, nil, nil))
@@ -66,13 +61,11 @@ func (c *ProductController) UpdateProduct(ctx *fiber.Ctx) error {
 	request.UserID = authID.ID
 	request.ProductUUID = ctx.Params("product_uuid")
 	if err := ctx.BodyParser(request); err != nil {
-		c.log.Warnf("Failed to parse request body: %+v", err)
 		return err
 	}
 	helper.TrimSpaces(request)
 	response, err := c.uc.UpdateProduct(ctx.UserContext(), request)
 	if err != nil {
-		c.log.Warnf("Failed to update product: %+v", err)
 		return err
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated product", fiber.StatusOK, nil, nil))
@@ -85,7 +78,6 @@ func (c *ProductController) DeleteProduct(ctx *fiber.Ctx) error {
 		ProductUUID: ctx.Params("product_uuid"),
 	}
 	if err := c.uc.DeleteProduct(ctx.UserContext(), request); err != nil {
-		c.log.Warnf("Failed to delete product: %+v", err)
 		return err
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

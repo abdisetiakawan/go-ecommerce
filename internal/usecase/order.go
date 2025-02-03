@@ -26,9 +26,10 @@ type OrderUseCase struct {
     shippingRepo repo.ShippingRepository
     storeRepo repo.StoreRepository
 	uuid      *helper.UUIDHelper
+	kafka *helper.KafkaProducer
 }
 
-func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, paymentRepo repo.PaymentRepository, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper) interfaces.OrderUseCase {
+func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, paymentRepo repo.PaymentRepository, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper, kafka *helper.KafkaProducer) interfaces.OrderUseCase {
 	return &OrderUseCase{
 		db:        db,
 		log:       log,
@@ -39,115 +40,107 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
         shippingRepo: shippingRepo,
         storeRepo: storeRepo,
 		uuid:      uuid,
+		kafka: kafka,
 	}
 }
 
 func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder) (*model.OrderResponse, error) {
-    tx := uc.db.WithContext(ctx).Begin()
-    defer tx.Rollback()
+	if err := helper.ValidateStruct(uc.val, uc.log, input); err != nil {
+		return nil, err
+	}
 
-    if err := helper.ValidateStruct(uc.val, uc.log, input); err != nil {
-        return nil, err
-    }
-    var productUUIDs []string
-    for _, item := range input.Items {
-        productUUIDs = append(productUUIDs, item.ProductUUID)
-    }
+	var productUUIDs []string
+	for _, item := range input.Items {
+		productUUIDs = append(productUUIDs, item.ProductUUID)
+	}
 
-    // val that all products belong to the same store
-    _, err := uc.orderRepo.FindStoreByProductUUIDs(productUUIDs)
-    if err != nil {
-        if err == gorm.ErrRecordNotFound {
-            uc.log.Warn("One or more products not found")
-            return nil, model.NewApiError(fiber.StatusNotFound, "One or more products not found", nil)
-        }
-        if err == model.ErrBadRequest {
-            uc.log.Warn("Products belong to different stores")
-            return nil, model.NewApiError(fiber.StatusConflict, "Products must belong to the same store", nil)
-        }
-        uc.log.WithError(err).Error("Failed to validate products")
-        return nil, model.ErrInternalServer
-    }
+	// val that all products belong to the same store
+	_, err := uc.orderRepo.FindStoreByProductUUIDs(productUUIDs)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			uc.log.Warn("One or more products not found")
+			return nil, model.NewApiError(fiber.StatusNotFound, "One or more products not found", nil)
+		}
+		if err == model.ErrBadRequest {
+			uc.log.Warn("Products belong to different stores")
+			return nil, model.NewApiError(fiber.StatusConflict, "Products must belong to the same store", nil)
+		}
+		uc.log.WithError(err).Error("Failed to validate products")
+		return nil, model.ErrInternalServer
+	}
 
-    var totalPrice float64
-    var orderItems []entity.OrderItem
-    for _, item := range input.Items {
-        product, err := uc.productRepo.FindProductByUUID(item.ProductUUID)
-        if err != nil {
-            uc.log.WithError(err).Error("Failed to find product")
-            return nil, err
-        }
+	var totalPrice float64
+	var orderItems []entity.OrderItem
+	for _, item := range input.Items {
+		product, err := uc.productRepo.FindProductByUUID(item.ProductUUID)
+		if err != nil {
+			uc.log.WithError(err).Error("Failed to find product")
+			return nil, err
+		}
 
-        if product.Stock < item.Quantity {
-            uc.log.Warnf("Product %s has insufficient stock", product.ProductName)
-            return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Product %s has insufficient stock", product.ProductName), nil)
-        }
+		if product.Stock < item.Quantity {
+			uc.log.Warnf("Product %s has insufficient stock", product.ProductName)
+			return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Product %s has insufficient stock", product.ProductName), nil)
+		}
 
-        product.Stock -= item.Quantity
+		product.Stock -= item.Quantity
         if err := uc.productRepo.UpdateProduct(&product); err != nil {
             uc.log.WithError(err).Error("Failed to update product stock")
             return nil, model.ErrInternalServer
         }
 
-        itemTotal := float64(item.Quantity) * product.Price
-        totalPrice += itemTotal
+		itemTotal := float64(item.Quantity) * product.Price
+		totalPrice += itemTotal
 
-        orderItems = append(orderItems, entity.OrderItem{
-            OrderItemUUID: uc.uuid.Generate(),
-            ProductID:    product.ID,
-            Quantity:     item.Quantity,
-            TotalPrice:   itemTotal,
-        })
-    }
+		orderItems = append(orderItems, entity.OrderItem{
+			OrderItemUUID: uc.uuid.Generate(),
+			ProductID:    product.ID,
+			Quantity:     item.Quantity,
+			TotalPrice:   itemTotal,
+		})
+	}
 
-    order := &entity.Order{
-        OrderUUID:  uc.uuid.Generate(),
-        UserID:     input.UserID,
-        Status:     "pending",
-        TotalPrice: totalPrice,
-        Items:      orderItems,
-    }
+	order := &entity.Order{
+		OrderUUID:  uc.uuid.Generate(),
+		UserID:     input.UserID,
+		Status:     "pending",
+		TotalPrice: totalPrice,
+		Items:      orderItems,
+	}
 
-    if err := uc.orderRepo.CreateOrder(order); err != nil {
-        uc.log.WithError(err).Error("Failed to create order")
-        return nil, model.ErrInternalServer
-    }
+	if err := uc.orderRepo.CreateOrder(order); err != nil {
+		uc.log.WithError(err).Error("Failed to create order")
+		return nil, model.ErrInternalServer
+	}
 
-    payment := &entity.Payment{
-        PaymentUUID: uc.uuid.Generate(),
-        OrderID:     order.ID,
-        Amount:      totalPrice,
-        Status:      "pending",
-        Method:      input.Payments.PaymentMethod,
-    }
-    if err := uc.paymentRepo.CreatePayment(payment); err != nil {
-        uc.log.WithError(err).Error("Failed to create payment")
-        return nil, model.ErrInternalServer
-    }
+	paymentMessage := &model.PaymentMessage{
+		Status:  "pending",
+		PaymentUUID: uc.uuid.Generate(),
+		OrderID: order.ID,
+		Amount:  totalPrice,
+		Method:  input.Payments.PaymentMethod,
+	}
+	shippingMessage := &model.ShippingMessage{
+		ShippingUUID: uc.uuid.Generate(),
+		Status:       "pending",
+		OrderID: order.ID,
+		Address: input.ShippingAddress.Address,
+		City:    input.ShippingAddress.City,
+		Province: input.ShippingAddress.Province,
+		PostalCode: input.ShippingAddress.PostalCode,
+	}
 
-    shipping := &entity.Shipping{
-        ShippingUUID: uc.uuid.Generate(),
-        OrderID:      order.ID,
-        Address:      input.ShippingAddress.Address,
-        City:         input.ShippingAddress.City,
-        Province:     input.ShippingAddress.Province,
-        PostalCode:   input.ShippingAddress.PostalCode,
-        Status:       "pending",
-    }
-    if err := uc.shippingRepo.CreateShipping(shipping); err != nil {
-        uc.log.WithError(err).Error("Failed to create shipping")
-        return nil, model.ErrInternalServer
-    }
+	if err := uc.kafka.SendMessage(ctx, paymentMessage, "payment_topic"); err != nil {
+		uc.log.WithError(err).Error("Failed to send payment message to Kafka")
+		return nil, model.ErrInternalServer
+	}
 
-    order.Payment = payment
-    order.Shipping = shipping
+	if err := uc.kafka.SendMessage(ctx, shippingMessage, "shipping_topic"); err != nil {
+		uc.log.WithError(err).Error("Failed to send shipping message to Kafka")
+		return nil, model.ErrInternalServer
+	}
 
-    if err := tx.Commit().Error; err != nil {
-        uc.log.WithError(err).Error("Failed to commit transaction")
-        return nil, model.ErrInternalServer
-    }
-
-    return converter.OrderToResponse(order), nil
+	return converter.CreateOrderToResponse(paymentMessage, shippingMessage, order), nil
 }
 
 

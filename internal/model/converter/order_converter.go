@@ -68,3 +68,33 @@ func OrderToResponseForSeller(order *entity.Order) *model.OrdersResponseForSelle
         CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
     }
 }
+
+func CreateOrderToResponse(payment *model.PaymentMessage, shipping *model.ShippingMessage, order *entity.Order) *model.OrderResponse {
+    items := make([]model.OrderItemResponse, len(order.Items))
+    for i, item := range order.Items {
+        items[i] = model.OrderItemResponse{
+            OrderItemUuid: item.OrderItemUUID,
+            Quantity:  item.Quantity,
+        }
+    }
+    return &model.OrderResponse{
+        OrderUUID:  order.OrderUUID,
+        TotalPrice: order.TotalPrice,
+        Status:     order.Status,
+        Items:      items,
+        Shipping: model.ShippingResponse{
+            ShippingUUID: shipping.ShippingUUID,
+            Address:      shipping.Address,
+            City:         shipping.City,
+            Province:     shipping.Province,
+            PostalCode:   shipping.PostalCode,
+            Status:       shipping.Status,
+        },
+        Payment: model.PaymentResponse{
+            PaymentUUID:  payment.PaymentUUID,
+            PaymentMethod: payment.Method,
+            Status:        payment.Status,
+        },
+        CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
+    }
+}

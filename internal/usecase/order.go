@@ -130,12 +130,12 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 		PostalCode: input.ShippingAddress.PostalCode,
 	}
 
-	if err := uc.kafka.SendMessage(ctx, paymentMessage, "payment_topic"); err != nil {
+	if err := uc.kafka.SendMessage(ctx, paymentMessage, "create_payment_topic"); err != nil {
 		uc.log.WithError(err).Error("Failed to send payment message to Kafka")
 		return nil, model.ErrInternalServer
 	}
 
-	if err := uc.kafka.SendMessage(ctx, shippingMessage, "shipping_topic"); err != nil {
+	if err := uc.kafka.SendMessage(ctx, shippingMessage, "create_shipping_topic"); err != nil {
 		uc.log.WithError(err).Error("Failed to send shipping message to Kafka")
 		return nil, model.ErrInternalServer
 	}

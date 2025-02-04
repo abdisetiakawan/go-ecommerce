@@ -22,7 +22,7 @@ func NewPaymentRepository(DB *gorm.DB, kafka *helper.KafkaConsumer) interfaces.P
 }
 
 func (r *PaymentRepository) CreatePayment() error {
-    consumer, err := r.kafka.Consume(context.Background(), "payment_topic")
+    consumer, err := r.kafka.Consume(context.Background(), "create_payment_topic")
     if err != nil {
         return err
     }

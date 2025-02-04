@@ -22,7 +22,7 @@ func NewShippingRepository(DB *gorm.DB, kafka *helper.KafkaConsumer) interfaces.
 }
 
 func (r *ShippingRepository) CreateShipping() error {
-	consumer, err := r.kafka.Consume(context.Background(), "shipping_topic")
+	consumer, err := r.kafka.Consume(context.Background(), "create_shipping_topic")
 	if err != nil {
 		logrus.WithError(err).Error("Failed to consume shipping topic")
 		return err

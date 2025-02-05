@@ -69,6 +69,16 @@ func Bootstrap(config *BootstrapConfig) {
 		}
 	}()
 	go func() {
+		if err := paymentRepository.CancelPayment(); err != nil {
+			config.Log.Error(err)
+		}
+	}()
+	go func() {
+		if err := shippingRepository.CancelShipping(); err != nil {
+			config.Log.Error(err)
+		}
+	}()
+	go func() {
         ticker := time.NewTicker(5 * time.Minute)
         for range ticker.C {
             if err := orderEventUC.RetryFailedEvents(context.Background()); err != nil {

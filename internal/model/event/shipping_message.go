@@ -1,4 +1,4 @@
-package model
+package event
 
 type ShippingMessage struct {
 	ShippingUUID string `json:"shipping_uuid"`

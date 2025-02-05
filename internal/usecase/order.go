@@ -8,6 +8,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
+	"github.com/abdisetiakawan/go-ecommerce/internal/model/event"
 	repo "github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
@@ -113,14 +114,14 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 		return nil, model.ErrInternalServer
 	}
 
-	paymentMessage := &model.PaymentMessage{
+	paymentMessage := &event.PaymentMessage{
 		Status:  "pending",
 		PaymentUUID: uc.uuid.Generate(),
 		OrderID: order.ID,
 		Amount:  totalPrice,
 		Method:  input.Payments.PaymentMethod,
 	}
-	shippingMessage := &model.ShippingMessage{
+	shippingMessage := &event.ShippingMessage{
 		ShippingUUID: uc.uuid.Generate(),
 		Status:       "pending",
 		OrderID: order.ID,

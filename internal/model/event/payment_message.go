@@ -1,4 +1,4 @@
-package model
+package event
 
 type PaymentMessage struct {
 	PaymentUUID string `json:"payment_uuid"`

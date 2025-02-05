@@ -6,7 +6,7 @@ import (
 
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
-	"github.com/abdisetiakawan/go-ecommerce/internal/model/event"
+	eventmodel "github.com/abdisetiakawan/go-ecommerce/internal/model/event_model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -32,7 +32,7 @@ func (r *ShippingRepository) CreateShipping() error {
 	for {
 		select {
 		case msg := <-consumer.Messages():
-			var shippingMessage event.ShippingMessage
+			var shippingMessage eventmodel.ShippingMessage
 			err := json.Unmarshal(msg.Value, &shippingMessage)
 			if err != nil {
 				logrus.WithError(err).Error("Failed to unmarshal shipping message")

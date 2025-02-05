@@ -228,50 +228,67 @@ func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOr
         return nil, err
     }
 
+    if order == nil {
+        return nil, model.NewApiError(fiber.StatusNotFound, "Order not found", nil)
+    }
+
     if order.Status == "completed" || order.Status == "cancelled" || order.Status == "shipped" || order.Status == "processed" {
         return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Order with ID %s cannot be cancelled, current status is %s", request.OrderUUID, order.Status), nil)
     }
     
     order.Status = "cancelled"
-    if err := uc.orderRepo.UpdateOrder(order); err != nil {
-        uc.log.WithError(err).Error("Failed to update order")
+    if err := tx.Model(&entity.Order{}).Where("id = ?", order.ID).Update("status", "cancelled").Error; err != nil {
+        uc.log.WithError(err).Error("Failed to update order status")
         return nil, model.ErrInternalServer
     }
 
-    if order.Payment != nil {
-        order.Payment.Status = "cancelled"
-        if err := uc.paymentRepo.UpdatePayment(order.Payment); err != nil {
-            uc.log.WithError(err).Error("Failed to update payment")
-            return nil, model.ErrInternalServer
-        }
+    paymentStatus, err := json.Marshal(eventmodel.PaymentMessage{
+        OrderID: order.ID,
+        Status:  "cancelled",
+    })
+    if err != nil {
+        uc.log.WithError(err).Error("Failed to marshal payment data")
+        return nil, model.ErrInternalServer
     }
 
-    if order.Shipping != nil {
-        order.Shipping.Status = "cancelled"
-        if err := uc.shippingRepo.UpdateShipping(order.Shipping); err != nil {
-            uc.log.WithError(err).Error("Failed to update shipping")
-            return nil, model.ErrInternalServer
-        }
+    shippingStatus, err := json.Marshal(eventmodel.ShippingMessage{
+        OrderID: order.ID,
+        Status:  "cancelled",
+    })
+    if err != nil {
+        uc.log.WithError(err).Error("Failed to marshal shipping data")
+        return nil, model.ErrInternalServer
+    }
+
+    orderEvent := &evententity.OrderEvent{
+        EventUUID:    uc.uuid.Generate(),
+        OrderID:      order.ID,
+        EventType:    "order_cancelled",
+        Status:       "pending",
+        PaymentData:  paymentStatus,
+        ShippingData: shippingStatus,
+    }
+
+    if err := tx.Create(orderEvent).Error; err != nil {
+        uc.log.WithError(err).Error("Failed to create order event")
+        return nil, model.ErrInternalServer
     }
 
     for _, item := range order.Items {
-        product, err := uc.productRepo.FindProductByID(item.ProductID)
-        if err != nil {
-            uc.log.WithError(err).Error("Failed to get product")
-            return nil, model.ErrInternalServer
-        }
-        product.Stock += item.Quantity
-        if err := uc.productRepo.UpdateProduct(&product); err != nil {
-            uc.log.WithError(err).Error("Failed to update product")
+        if err := tx.Exec("UPDATE products SET stock = stock + ? WHERE id = ?", item.Quantity, item.ProductID).Error; err != nil {
+            uc.log.WithError(err).Error("Failed to update product stock")
             return nil, model.ErrInternalServer
         }
     }
-    
+
     if err := tx.Commit().Error; err != nil {
         uc.log.WithError(err).Error("Failed to commit transaction")
         return nil, model.ErrInternalServer
     }
-    
+
+    go uc.orderEvent.CancelOrderEvent(ctx, orderEvent)
+	order.Shipping.Status = "cancelled"
+	order.Payment.Status = "cancelled"
     return converter.OrderToResponse(order), nil
 }
 

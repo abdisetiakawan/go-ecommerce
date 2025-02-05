@@ -6,7 +6,7 @@ import (
 
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
-	"github.com/abdisetiakawan/go-ecommerce/internal/model"
+	eventmodel "github.com/abdisetiakawan/go-ecommerce/internal/model/event_model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -22,7 +22,7 @@ func NewShippingRepository(DB *gorm.DB, kafka *helper.KafkaConsumer) interfaces.
 }
 
 func (r *ShippingRepository) CreateShipping() error {
-	consumer, err := r.kafka.Consume(context.Background(), "shipping_topic")
+	consumer, err := r.kafka.Consume(context.Background(), "create_shipping_topic")
 	if err != nil {
 		logrus.WithError(err).Error("Failed to consume shipping topic")
 		return err
@@ -32,7 +32,7 @@ func (r *ShippingRepository) CreateShipping() error {
 	for {
 		select {
 		case msg := <-consumer.Messages():
-			var shippingMessage model.ShippingMessage
+			var shippingMessage eventmodel.ShippingMessage
 			err := json.Unmarshal(msg.Value, &shippingMessage)
 			if err != nil {
 				logrus.WithError(err).Error("Failed to unmarshal shipping message")

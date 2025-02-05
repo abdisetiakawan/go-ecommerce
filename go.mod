@@ -67,6 +67,7 @@ require (
 
 require (
 	github.com/IBM/sarama v1.45.0
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/go-playground/validator/v10 v10.24.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/fiber v1.14.6

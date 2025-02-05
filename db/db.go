@@ -6,6 +6,7 @@ import (
 
 	"github.com/abdisetiakawan/go-ecommerce/internal/config"
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
+	evententity "github.com/abdisetiakawan/go-ecommerce/internal/entity/event_entity"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -44,6 +45,11 @@ func Migrate(db *gorm.DB, log *logrus.Logger) {
     if err := db.AutoMigrate(&entity.Shipping{}); err != nil {
         log.Fatalf("failed to migrate Shipping entity: %v", err)
     }
+
+	// Event
+	if err := db.AutoMigrate(&evententity.OrderEvent{}); err != nil {
+		log.Fatalf("failed to migrate OrderEvent entity: %v", err)
+	}
 
     log.Info("Migration completed successfully")
 }

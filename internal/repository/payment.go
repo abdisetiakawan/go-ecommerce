@@ -6,7 +6,7 @@ import (
 
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
-	"github.com/abdisetiakawan/go-ecommerce/internal/model"
+	eventmodel "github.com/abdisetiakawan/go-ecommerce/internal/model/event_model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -22,7 +22,7 @@ func NewPaymentRepository(DB *gorm.DB, kafka *helper.KafkaConsumer) interfaces.P
 }
 
 func (r *PaymentRepository) CreatePayment() error {
-    consumer, err := r.kafka.Consume(context.Background(), "payment_topic")
+    consumer, err := r.kafka.Consume(context.Background(), "create_payment_topic")
     if err != nil {
         return err
     }
@@ -31,7 +31,7 @@ func (r *PaymentRepository) CreatePayment() error {
     for {
         select {
         case msg := <-consumer.Messages():
-            var paymentMessage model.PaymentMessage
+            var paymentMessage eventmodel.PaymentMessage
             err := json.Unmarshal(msg.Value, &paymentMessage)
             if err != nil {
                 logrus.WithError(err).Error("Failed to unmarshal payment message")

@@ -1,12 +1,17 @@
 package config
 
 import (
+	"context"
+	"time"
+
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/route"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository"
+	eventrepository "github.com/abdisetiakawan/go-ecommerce/internal/repository/event_repository"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase"
+	eventuc "github.com/abdisetiakawan/go-ecommerce/internal/usecase/event_uc"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -27,6 +32,10 @@ type BootstrapConfig struct {
 }
 
 func Bootstrap(config *BootstrapConfig) {
+	// Event
+	orderEventRepo := eventrepository.NewOrderEventRepository(config.DB)
+	orderEventUC := eventuc.NewOrderEventEvent(config.DB, config.Log, orderEventRepo, config.KafkaProducer)
+
 	userRepository := repository.NewUserRepository(config.DB)
 	profileRepository := repository.NewProfileRepository(config.DB)
 	orderRepository := repository.NewOrderRepository(config.DB)
@@ -37,7 +46,7 @@ func Bootstrap(config *BootstrapConfig) {
 
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, config.UserUUID, config.Jwt)
 	profileUseCase := usecase.NewProfileUseCase(config.DB, config.Log, config.Validate, profileRepository)
-	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, paymentRepository, shippingRepository, storeRepository, config.UserUUID, config.KafkaProducer)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, paymentRepository, shippingRepository, storeRepository, config.UserUUID, config.KafkaProducer, orderEventUC)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, productRepository, storeRepository, config.UserUUID)
 	storeUseCase := usecase.NewStoreUseCase(config.DB, config.Log, config.Validate, storeRepository, config.UserUUID)
 	shippingUseCase := usecase.NewShippingUseCase(config.DB, config.Log, config.Validate, shippingRepository, storeRepository, orderRepository, config.UserUUID)
@@ -59,6 +68,14 @@ func Bootstrap(config *BootstrapConfig) {
 			config.Log.Error(err)
 		}
 	}()
+	go func() {
+        ticker := time.NewTicker(5 * time.Minute)
+        for range ticker.C {
+            if err := orderEventUC.RetryFailedEvents(context.Background()); err != nil {
+                logrus.WithError(err).Error("Failed to retry events")
+            }
+        }
+    }()
 
 	AuthMiddleware := middleware.NewAuth(config.Config)
 	routeConfig := &route.RouteConfig{

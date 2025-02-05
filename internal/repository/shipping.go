@@ -63,3 +63,33 @@ func (r *ShippingRepository) CreateShipping() error {
 func (r *ShippingRepository) UpdateShipping(shipping *entity.Shipping) error {
 	return r.DB.Save(shipping).Error
 }
+
+func (r *ShippingRepository) CancelShipping() error {
+	consumer, err := r.kafka.Consume(context.Background(), "cancel_shipping_topic")
+	if err != nil {
+		logrus.WithError(err).Error("Failed to consume shipping topic")
+		return err
+	}
+	defer consumer.Close()
+
+	for {
+		select {
+		case msg := <-consumer.Messages():
+			var shippingMessage eventmodel.ShippingMessage
+			err := json.Unmarshal(msg.Value, &shippingMessage)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to unmarshal shipping message")
+				continue
+			}
+
+			if err := r.DB.Model(&entity.Shipping{}).
+			Where("order_id = ?", shippingMessage.OrderID).
+			Update("status", "cancelled").Error; err != nil {
+			logrus.WithError(err).Error("Failed to update order status")
+		}
+
+		case err := <-consumer.Errors():
+			logrus.WithError(err).Error("Failed to consume shipping topic")
+		}
+	}
+}

@@ -2,14 +2,17 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
+	evententity "github.com/abdisetiakawan/go-ecommerce/internal/entity/event_entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
-	"github.com/abdisetiakawan/go-ecommerce/internal/model/event"
+	eventmodel "github.com/abdisetiakawan/go-ecommerce/internal/model/event_model"
 	repo "github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
+	ordereventUC "github.com/abdisetiakawan/go-ecommerce/internal/usecase/event_uc/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber"
@@ -26,11 +29,12 @@ type OrderUseCase struct {
     paymentRepo repo.PaymentRepository
     shippingRepo repo.ShippingRepository
     storeRepo repo.StoreRepository
+	orderEvent ordereventUC.OrderEventUseCase
 	uuid      *helper.UUIDHelper
 	kafka *helper.KafkaProducer
 }
 
-func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, paymentRepo repo.PaymentRepository, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper, kafka *helper.KafkaProducer) interfaces.OrderUseCase {
+func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, paymentRepo repo.PaymentRepository, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper, kafka *helper.KafkaProducer, orderEvent ordereventUC.OrderEventUseCase) interfaces.OrderUseCase {
 	return &OrderUseCase{
 		db:        db,
 		log:       log,
@@ -41,11 +45,14 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
         shippingRepo: shippingRepo,
         storeRepo: storeRepo,
 		uuid:      uuid,
+		orderEvent: orderEvent,
 		kafka: kafka,
 	}
 }
 
 func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder) (*model.OrderResponse, error) {
+	tx := uc.db.Begin()
+    defer tx.Rollback()
 	if err := helper.ValidateStruct(uc.val, uc.log, input); err != nil {
 		return nil, err
 	}
@@ -114,34 +121,65 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 		return nil, model.ErrInternalServer
 	}
 
-	paymentMessage := &event.PaymentMessage{
-		Status:  "pending",
+	paymentData, err := json.Marshal(eventmodel.PaymentMessage{
+		OrderID:     order.ID,
 		PaymentUUID: uc.uuid.Generate(),
-		OrderID: order.ID,
-		Amount:  totalPrice,
-		Method:  input.Payments.PaymentMethod,
+		Amount:      totalPrice,
+		Method:      input.Payments.PaymentMethod,
+		Status:      "pending",
+	})
+	if err != nil {
+		uc.log.WithError(err).Error("Failed to marshal payment data")
+		return nil, model.ErrInternalServer
 	}
-	shippingMessage := &event.ShippingMessage{
+	
+	shippingData, err := json.Marshal(eventmodel.ShippingMessage{
 		ShippingUUID: uc.uuid.Generate(),
+		OrderID:       order.ID,
+		Address:      input.ShippingAddress.Address,
+		City:        input.ShippingAddress.City,
+		Province:    input.ShippingAddress.Province,
+		PostalCode:  input.ShippingAddress.PostalCode,
+		Status:      "pending",
+	})
+	if err != nil {
+		uc.log.WithError(err).Error("Failed to marshal shipping data")
+		return nil, model.ErrInternalServer
+	}
+	
+	orderEvent := &evententity.OrderEvent{
+		EventUUID:    uc.uuid.Generate(),
+		OrderID:      order.ID,
+		EventType:    "order_created",
 		Status:       "pending",
-		OrderID: order.ID,
-		Address: input.ShippingAddress.Address,
-		City:    input.ShippingAddress.City,
-		Province: input.ShippingAddress.Province,
-		PostalCode: input.ShippingAddress.PostalCode,
+		PaymentData:  paymentData,
+		ShippingData: shippingData,
 	}
+	
 
-	if err := uc.kafka.SendMessage(ctx, paymentMessage, "create_payment_topic"); err != nil {
-		uc.log.WithError(err).Error("Failed to send payment message to Kafka")
+    if err := tx.Create(orderEvent).Error; err != nil {
+        return nil, model.ErrInternalServer
+    }
+
+    if err := tx.Commit().Error; err != nil {
+        return nil, model.ErrInternalServer
+    }
+
+	go uc.orderEvent.ProcessOrderEvent(ctx, orderEvent)
+
+	var paymentMessage eventmodel.PaymentMessage
+	if err := json.Unmarshal(paymentData, &paymentMessage); err != nil {
+		uc.log.WithError(err).Error("Failed to unmarshal payment data")
 		return nil, model.ErrInternalServer
 	}
 
-	if err := uc.kafka.SendMessage(ctx, shippingMessage, "create_shipping_topic"); err != nil {
-		uc.log.WithError(err).Error("Failed to send shipping message to Kafka")
+	var shippingMessage eventmodel.ShippingMessage
+	if err := json.Unmarshal(shippingData, &shippingMessage); err != nil {
+		uc.log.WithError(err).Error("Failed to unmarshal shipping data")
 		return nil, model.ErrInternalServer
 	}
 
-	return converter.CreateOrderToResponse(paymentMessage, shippingMessage, order), nil
+	return converter.CreateOrderToResponse(&paymentMessage, &shippingMessage, order), nil
 }
 
 

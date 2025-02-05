@@ -102,3 +102,50 @@ func (uc *OrderEventUseCase) RetryFailedEvents(ctx context.Context) error {
 	}
 	return nil
 }
+
+func (uc *OrderEventUseCase) CancelOrderEvent(ctx context.Context, event *evententity.OrderEvent) error {
+	var paymentStatus eventmodel.PaymentMessage
+	var shippingStatus eventmodel.ShippingMessage
+
+	if err := json.Unmarshal(event.PaymentData, &paymentStatus); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(event.ShippingData, &shippingStatus); err != nil {
+		return err
+	}
+
+	paymentMessage := &eventmodel.PaymentMessage{
+		OrderID:     event.OrderID,
+		Status:      paymentStatus.Status,
+	}
+
+	err := retry.Do(func() error {
+		return uc.kafka.SendMessage(ctx, paymentMessage, "cancel_payment_topic")
+	}, retry.Attempts(3), retry.Delay(2*time.Second))
+
+	if err != nil {
+		event.Status = "failed"
+		event.Error = fmt.Sprintf("Payment processing failed: %v", err)
+		uc.eventRepo.UpdateOrderEvent(event)
+		return err
+	}
+
+	shippingMessage := &eventmodel.ShippingMessage{
+		OrderID:     event.OrderID,
+		Status:       shippingStatus.Status,
+	}
+
+	err = retry.Do(func() error {
+		return uc.kafka.SendMessage(ctx, shippingMessage, "cancel_shipping_topic")
+	}, retry.Attempts(3), retry.Delay(2*time.Second))
+
+	if err != nil {
+		event.Status = "failed"
+		event.Error = fmt.Sprintf("Shipping processing failed: %v", err)
+		uc.eventRepo.UpdateOrderEvent(event)
+		return err
+	}
+
+	event.Status = "completed"
+	return uc.eventRepo.UpdateOrderEvent(event)
+}

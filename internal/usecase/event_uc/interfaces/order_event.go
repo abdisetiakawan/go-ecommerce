@@ -9,4 +9,5 @@ import (
 type OrderEventUseCase interface {
 	ProcessOrderEvent(ctx context.Context, event *evententity.OrderEvent) error
 	RetryFailedEvents(ctx context.Context) error
+	CancelOrderEvent(ctx context.Context, event *evententity.OrderEvent) error
 }

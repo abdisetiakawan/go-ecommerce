@@ -3,7 +3,7 @@ package converter
 import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
-	"github.com/abdisetiakawan/go-ecommerce/internal/model/event"
+	eventmodel "github.com/abdisetiakawan/go-ecommerce/internal/model/event_model"
 )
 
 func OrderToResponse(order *entity.Order) *model.OrderResponse {
@@ -70,7 +70,7 @@ func OrderToResponseForSeller(order *entity.Order) *model.OrdersResponseForSelle
     }
 }
 
-func CreateOrderToResponse(payment *event.PaymentMessage, shipping *event.ShippingMessage, order *entity.Order) *model.OrderResponse {
+func CreateOrderToResponse(payment *eventmodel.PaymentMessage, shipping *eventmodel.ShippingMessage, order *entity.Order) *model.OrderResponse {
     items := make([]model.OrderItemResponse, len(order.Items))
     for i, item := range order.Items {
         items[i] = model.OrderItemResponse{

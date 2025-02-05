@@ -49,6 +49,17 @@ func Bootstrap(config *BootstrapConfig) {
 	storeController := http.NewStoreController(storeUseCase)
 	shippingController := http.NewShippingController(shippingUseCase)
 
+	go func() {
+		if err := paymentRepository.CreatePayment(); err != nil {
+			config.Log.Error(err)
+		}
+	}()
+	go func() {
+		if err := shippingRepository.CreateShipping(); err != nil {
+			config.Log.Error(err)
+		}
+	}()
+
 	AuthMiddleware := middleware.NewAuth(config.Config)
 	routeConfig := &route.RouteConfig{
 		App: config.App,

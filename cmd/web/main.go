@@ -1,11 +1,17 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 
 	"github.com/abdisetiakawan/go-ecommerce/internal/config"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/swagger"
 )
+
+//go:embed swagger.yaml
+var swaggerYAML []byte
 
 func main() {
     viperConfig := config.NewViper()
@@ -27,6 +33,14 @@ func main() {
         panic(err)
     }
     app := config.NewFiber(viperConfig)
+    app.Get("/swagger.yaml", func(c *fiber.Ctx) error {
+        c.Set("Content-Type", "text/yaml")
+        return c.Send(swaggerYAML)
+    })
+
+    app.Get("/swagger/*", swagger.New(swagger.Config{
+        URL: "/swagger.yaml",
+    }))
 
     config.Bootstrap(&config.BootstrapConfig{DB: db, App: app, Log: logger, Validate: validator, Config: viperConfig, Jwt: jwt, UserUUID: uuid, KafkaProducer: kafkaProducer, KafkaConsumer: kafkaConsumer})
     port := viperConfig.GetInt("web.port")

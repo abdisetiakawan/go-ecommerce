@@ -27,7 +27,7 @@ func (rc *RouteConfig) Setup() {
 }
 
 func (rc *RouteConfig) setupAuthRoutes() {
-	authRateLimiter := middleware.NewDynamicRateLimiter(5, 2*time.Minute) 
+	authRateLimiter := middleware.NewDynamicRateLimiter(10, 1*time.Minute) 
 	authGroup := rc.App.Group("/api/auth", authRateLimiter)
 	{
 		authGroup.Post("/register", rc.UserController.Register)

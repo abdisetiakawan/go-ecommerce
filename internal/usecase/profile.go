@@ -73,30 +73,33 @@ func (u *ProfileUseCase) UpdateProfile(ctx context.Context, request *model.Updat
 	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
 		return nil, err
 	}
-	var profile entity.Profile
-	response, err := u.profileRepo.GetProfileByUserID(request.UserID)
+
+	existingProfile, err := u.profileRepo.GetProfileByUserID(request.UserID)
 	if err != nil {
 		u.log.Warnf("Failed to get profile: %+v", err)
 		return nil, err
 	}
-	if response.Gender != "" {
-		profile.Gender = response.Gender
+
+	if request.Gender != "" {
+		existingProfile.Gender = request.Gender
 	}
-	if response.PhoneNumber != "" {
-		profile.PhoneNumber = response.PhoneNumber
+	if request.PhoneNumber != "" {
+		existingProfile.PhoneNumber = request.PhoneNumber
 	}
-	if response.Address != "" {
-		profile.Address = response.Address
+	if request.Address != "" {
+		existingProfile.Address = request.Address
 	}
-	if response.Avatar != "" {
-		profile.Avatar = response.Avatar
+	if request.Avatar != "" {
+		existingProfile.Avatar = request.Avatar
 	}
-	if response.Bio != "" {
-		profile.Bio = response.Bio
+	if request.Bio != "" {
+		existingProfile.Bio = request.Bio
 	}
-	if err := u.profileRepo.UpdateProfile(&profile); err != nil {
+
+	if err := u.profileRepo.UpdateProfile(existingProfile); err != nil {
 		u.log.Warnf("Failed to update profile: %+v", err)
 		return nil, err
 	}
-	return converter.ProfileToResponse(&profile), nil
+
+	return converter.ProfileToResponse(existingProfile), nil
 }

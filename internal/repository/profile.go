@@ -53,5 +53,12 @@ func (r *ProfileRepository) CreateProfile(entity *entity.Profile) error {
 }
 
 func (r *ProfileRepository) UpdateProfile(entity *entity.Profile) error {
-	return r.DB.Save(entity).Error
+	if entity.ID == 0 {
+		return model.ErrNotFound
+	}
+
+	if err := r.DB.Model(&entity).Where("id = ?", entity.ID).Updates(entity).Error; err != nil {
+		return err
+	}
+	return nil
 }

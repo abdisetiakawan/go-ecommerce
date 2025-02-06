@@ -1,0 +1,900 @@
+openapi: 3.0.0
+info:
+  title: Go E-commerce API
+  description: API documentation for the Go E-commerce project
+  version: 1.0.0
+  contact:
+    name: Abdi Setiawan
+    email: bedikadiryt@gmail.com
+    url: https://github.com/abdisetiakawan
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Register a new user with username, email, and password.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - name
+                - email
+                - role
+                - password
+                - confirm_password
+              properties:
+                username:
+                  type: string
+                  example: johndoe
+                  description: Username must be between 3 and 100 characters
+                name:
+                  type: string
+                  example: John Doe
+                  description: Name must be between 3 and 100 characters
+                email:
+                  type: string
+                  format: email
+                  example: johndoe@example.com
+                role:
+                  type: string
+                  example: buyer
+                  description: Role must be either 'seller' or 'buyer'
+                password:
+                  type: string
+                  format: password
+                  example: password123
+                  description: Password must be at least 8 characters
+                confirm_password:
+                  type: string
+                  format: password
+                  example: password123
+                  description: Confirm password must be at least 8 characters
+      responses:
+        "201":
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User registered successfully
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: string
+                        example: 60d0fe4f5311236168a109ca
+
+  /auth/login:
+    post:
+      summary: Login a user
+      description: Authenticate a user with email and password.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: johndoe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        "200":
+          description: User successfully logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      security:
+        - bearerAuth: []
+
+  /user/profile:
+    post:
+      summary: Create a user profile
+      description: Create a profile for the authenticated user.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - gender
+                - phone_number
+                - address
+              properties:
+                gender:
+                  type: string
+                  example: male
+                  description: Gender must be either 'male' or 'female'
+                phone_number:
+                  type: string
+                  example: +1234567890
+                  description: Phone number must be in E.164 format
+                address:
+                  type: string
+                  example: 123 Main St, Anytown, USA
+                avatar:
+                  type: string
+                  example: https://example.com/avatar.jpg
+                  description: Avatar URL must be a valid URL
+                bio:
+                  type: string
+                  example: A short bio about the user
+      responses:
+        "201":
+          description: Profile successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Profile created successfully
+                  data:
+                    type: object
+                    properties:
+                      profile_id:
+                        type: string
+                        example: 60d0fe4f5311236168a109cb
+    get:
+      summary: Get user profile
+      description: Retrieve the profile of the authenticated user.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Profile successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Profile retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: John Doe
+                      email:
+                        type: string
+                        example: johndoe@example.com
+                      phone:
+                        type: string
+                        example: +1234567890
+                      address:
+                        type: string
+                        example: 123 Main St, Anytown, USA
+
+    put:
+      summary: Update user profile
+      description: Update the profile of the authenticated user.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: johndoe@example.com
+                phone:
+                  type: string
+                  example: +1234567890
+                address:
+                  type: string
+                  example: 123 Main St, Anytown, USA
+                gender:
+                  type: string
+                  example: male
+                  description: Gender must be either 'male' or 'female'
+                phone_number:
+                  type: string
+                  example: +1234567890
+                  description: Phone number must be in E.164 format
+                avatar:
+                  type: string
+                  example: https://example.com/avatar.jpg
+                  description: Avatar URL must be a valid URL
+                bio:
+                  type: string
+                  example: A short bio about the user
+      responses:
+        "200":
+          description: Profile successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Profile updated successfully
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: John Doe
+                      email:
+                        type: string
+                        example: johndoe@example.com
+                      phone:
+                        type: string
+                        example: +1234567890
+                      address:
+                        type: string
+                        example: 123 Main St, Anytown, USA
+                      gender:
+                        type: string
+                        example: male
+                      phone_number:
+                        type: string
+                        example: +1234567890
+                      avatar:
+                        type: string
+                        example: https://example.com/avatar.jpg
+                      bio:
+                        type: string
+                        example: A short bio about the user
+
+  /buyer/orders:
+    get:
+      summary: Get orders by buyer
+      description: Retrieve a list of orders placed by the authenticated buyer.
+      tags:
+        - Buyer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            example: pending
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 10
+      responses:
+        "200":
+          description: Orders successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Orders retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        order_id:
+                          type: string
+                          example: 60d0fe4f5311236168a109cc
+                        status:
+                          type: string
+                          example: pending
+                        total_price:
+                          type: number
+                          example: 99.99
+                  paging:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      size:
+                        type: integer
+                        example: 10
+                      total_items:
+                        type: integer
+                        example: 100
+                      total_pages:
+                        type: integer
+                        example: 10
+
+    post:
+      summary: Create a new order
+      description: Create a new order for the authenticated buyer.
+      tags:
+        - Buyer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+                - shipping_address
+                - payments
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - product_uuid
+                      - quantity
+                    properties:
+                      product_uuid:
+                        type: string
+                        example: 60d0fe4f5311236168a109cd
+                        description: Product UUID must be a valid UUID
+                      quantity:
+                        type: integer
+                        example: 2
+                        description: Quantity must be greater than or equal to 1
+                shipping_address:
+                  type: object
+                  required:
+                    - address
+                    - city
+                    - province
+                    - postal_code
+                  properties:
+                    address:
+                      type: string
+                      example: 123 Main St, Anytown, USA
+                    city:
+                      type: string
+                      example: Anytown
+                    province:
+                      type: string
+                      example: USA
+                    postal_code:
+                      type: string
+                      example: 12345
+                      description: Postal code must be exactly 5 characters
+                payments:
+                  type: object
+                  required:
+                    - payment_method
+                  properties:
+                    payment_method:
+                      type: string
+                      example: cash
+                      description: Payment method must be either 'cash' or 'transfer'
+      responses:
+        "201":
+          description: Order successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Order created successfully
+                  data:
+                    type: object
+                    properties:
+                      order_id:
+                        type: string
+                        example: 60d0fe4f5311236168a109ce
+
+  /buyer/orders/{order_uuid}:
+    get:
+      summary: Get order by ID
+      description: Retrieve details of a specific order by its ID.
+      tags:
+        - Buyer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: order_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 60d0fe4f5311236168a109cf
+      responses:
+        "200":
+          description: Order successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Order retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      order_id:
+                        type: string
+                        example: 60d0fe4f5311236168a109cf
+                      status:
+                        type: string
+                        example: pending
+                      total_price:
+                        type: number
+                        example: 99.99
+  /buyer/orders/{order_uuid}/cancel:
+    patch:
+      summary: Cancel an order
+      description: Cancel a specific order by its ID.
+      tags:
+        - Buyer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: order_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 60d0fe4f5311236168a109cf
+      responses:
+        "204":
+          description: Order successfully canceled
+
+  /seller/store:
+    post:
+      summary: Register a new store
+      description: Register a new store for the authenticated seller.
+      tags:
+        - Seller
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - store_name
+                - description
+              properties:
+                store_name:
+                  type: string
+                  example: My Store
+                description:
+                  type: string
+                  example: A store selling various products
+      responses:
+        "201":
+          description: Store successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Store registered successfully
+                  data:
+                    type: object
+                    properties:
+                      store_name:
+                        type: string
+                        example: My Store
+                      description:
+                        type: string
+                        example: A store selling various products
+                      created_at:
+                        type: string
+                        example: 2022-01-01T12:00:00Z
+                      updated_at:
+                        type: string
+                        example: 2022-01-01T12:00:00Z
+
+    get:
+      summary: Get store details
+      description: Retrieve details of the authenticated seller's store.
+      tags:
+        - Seller
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Store details successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Store retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      store_name:
+                        type: string
+                        example: My Store
+                      description:
+                        type: string
+                        example: A store selling various products
+                      created_at:
+                        type: string
+                        example: 2022-01-01T12:00:00Z
+                      updated_at:
+                        type: string
+                        example: 2022-01-01T12:00:00Z
+
+    put:
+      summary: Update store details
+      description: Update details of the authenticated seller's store.
+      tags:
+        - Seller
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                store_name:
+                  type: string
+                  example: My Store
+                description:
+                  type: string
+                  example: A store selling various products
+      responses:
+        "200":
+          description: Store details successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Store updated successfully
+                  data:
+                    type: object
+                    properties:
+                      store_name:
+                        type: string
+                        example: My Store
+                      description:
+                        type: string
+                        example: A store selling various products
+                      created_at:
+                        type: string
+                        example: 2022-01-01T12:00:00Z
+                      updated_at:
+                        type: string
+                        example: 2022-01-01T12:00:00Z
+
+  /seller/products:
+    post:
+      summary: Register a new product
+      description: Register a new product for the authenticated seller's store.
+      tags:
+        - Seller
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product_name
+                - description
+                - price
+                - category
+                - stock
+              properties:
+                product_name:
+                  type: string
+                  example: Product A
+                  description: Product name must be between 3 and 255 characters
+                description:
+                  type: string
+                  example: A high-quality product
+                  description: Description must be at least 10 characters
+                price:
+                  type: number
+                  example: 99.99
+                  description: Price must be greater than 0
+                category:
+                  type: string
+                  example: Electronics
+                  description: Category must be one of 'clothes', 'electronics', or 'accessories'
+                stock:
+                  type: integer
+                  example: 100
+                  description: Stock must be greater than or equal to 0
+      responses:
+        "201":
+          description: Product successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Product registered successfully
+                  data:
+                    type: object
+                    properties:
+                      product_id:
+                        type: string
+                        example: 60d0fe4f5311236168a109d1
+
+    get:
+      summary: Get products
+      description: Retrieve a list of products for the authenticated seller's store.
+      tags:
+        - Seller
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Product A
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Electronics
+        - name: price_min
+          in: query
+          required: false
+          schema:
+            type: number
+            example: 10
+        - name: price_max
+          in: query
+          required: false
+          schema:
+            type: number
+            example: 100
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 10
+      responses:
+        "200":
+          description: Products successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Products retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_id:
+                          type: string
+                          example: 60d0fe4f5311236168a109d1
+                        name:
+                          type: string
+                          example: Product A
+                        description:
+                          type: string
+                          example: A high-quality product
+                        price:
+                          type: number
+                          example: 99.99
+                        category:
+                          type: string
+                          example: Electronics
+                        stock:
+                          type: integer
+                          example: 100
+                  paging:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      size:
+                        type: integer
+                        example: 10
+                      total_items:
+                        type: integer
+                        example: 100
+                      total_pages:
+                        type: integer
+                        example: 10
+
+  /seller/products/{product_uuid}:
+    get:
+      summary: Get product by ID
+      description: Retrieve details of a specific product by its ID.
+      tags:
+        - Seller
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: product_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 60d0fe4f5311236168a109d1
+      responses:
+        "200":
+          description: Product successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Product retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      product_id:
+                        type: string
+                        example: 60d0fe4f5311236168a109d1
+                      name:
+                        type: string
+                        example: Product A
+                      description:
+                        type: string
+                        example: A high-quality product
+                      price:
+                        type: number
+                        example: 99.99
+                      category:
+                        type: string
+                        example: Electronics
+                      stock:
+                        type: integer
+                        example: 100
+
+    put:
+      summary: Update product details
+      description: Update details of a specific product by its ID.
+      tags:
+        - Seller
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: product_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 60d0fe4f5311236168a109d1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_name:
+                  type: string
+                  example: Product A
+                  description: Product name must be between 3 and 255 characters
+                description:
+                  type: string
+                  example: A high-quality product
+                  description: Description must be at least 10 characters
+                price:
+                  type: number
+                  example: 99.99
+                  description: Price must be greater than 0
+                category:
+                  type: string
+                  example: Electronics
+                  description: Category must be one of 'clothes', 'electronics', or 'accessories'
+                stock:
+                  type: integer
+                  example: 100
+                  description: Stock must be greater than or equal to 0
+      responses:
+        "200":
+          description: Product successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Product updated successfully
+                  data:
+                    type: object
+                    properties:
+                      product_id:
+                        type: string
+                        example: 60d0fe4f5311236168a109d1
+                      product_name:
+                        type: string
+                        example: Product A

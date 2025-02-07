@@ -317,18 +317,33 @@ func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.Checko
         uc.log.WithError(err).Error("Failed to update order")
         return nil, model.ErrInternalServer
     }
-    if order.Payment != nil {
-        order.Payment.Status = "paid"
-        if err := uc.paymentRepo.UpdatePayment(order.Payment); err != nil {
-            uc.log.WithError(err).Error("Failed to update payment")
-            return nil, model.ErrInternalServer
-        }
-    }
+	paymentStatus, err := json.Marshal(eventmodel.PaymentMessage{
+		OrderID: order.ID,
+		Status:  "paid",
+	})
+	if err != nil {
+		uc.log.WithError(err).Error("Failed to marshal payment data")
+		return nil, model.ErrInternalServer
+	}
+	orderEvent := &evententity.OrderEvent{
+		EventUUID: uc.uuid.Generate(),
+		OrderID: order.ID,
+		EventType: "payment_processed",
+		Status: "pending",
+		PaymentData: paymentStatus,
+	}
+	if err := tx.Create(orderEvent).Error; err != nil {
+		uc.log.WithError(err).Error("Failed to create order event")
+		return nil, model.ErrInternalServer
+	}
 
     if err := tx.Commit().Error; err != nil {
         uc.log.WithError(err).Error("Failed to commit transaction")
         return nil, model.ErrInternalServer
     }
+
+	go uc.orderEvent.CheckoutOrderEvent(ctx, orderEvent)
+	order.Payment.Status = "paid"
     return converter.OrderToResponse(order), nil
 }
 

@@ -90,3 +90,33 @@ func (r *PaymentRepository) CancelPayment() error {
         }
     }
 }
+
+func (r *PaymentRepository) CheckoutPayment() error {
+    consumer, err := r.kafka.Consume(context.Background(), "checkout_payment_topic")
+    if err != nil {
+        return err
+    }
+    defer consumer.Close()
+
+    for {
+        select {
+        case msg := <-consumer.Messages():
+            var paymentMessage eventmodel.PaymentMessage
+            err := json.Unmarshal(msg.Value, &paymentMessage)
+            if err != nil {
+                logrus.WithError(err).Error("Failed to unmarshal payment message")
+                continue
+            }
+
+            if err := r.DB.Model(&entity.Payment{}).
+                Where("order_id = ?", paymentMessage.OrderID).
+                Update("status", paymentMessage.Status).Error; err != nil {
+                logrus.WithError(err).Error("Failed to update order status")
+            }
+        
+
+        case err := <-consumer.Errors():
+            logrus.WithError(err).Error("Failed to consume payment topic")
+        }
+    }
+}

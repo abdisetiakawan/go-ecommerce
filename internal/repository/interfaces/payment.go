@@ -6,4 +6,5 @@ type PaymentRepository interface {
 	CreatePayment() error
 	UpdatePayment(payment *entity.Payment) error
 	CancelPayment() error
+	CheckoutPayment() error
 }

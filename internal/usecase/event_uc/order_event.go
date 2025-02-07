@@ -149,3 +149,30 @@ func (uc *OrderEventUseCase) CancelOrderEvent(ctx context.Context, event *evente
 	event.Status = "completed"
 	return uc.eventRepo.UpdateOrderEvent(event)
 }
+
+func (uc *OrderEventUseCase) CheckoutOrderEvent(ctx context.Context, event *evententity.OrderEvent) error {
+	var paymentStatus eventmodel.PaymentMessage
+	
+	if err := json.Unmarshal(event.PaymentData, &paymentStatus); err != nil {
+		return err
+	}
+
+	paymentMessage := &eventmodel.PaymentMessage{
+		OrderID:     event.OrderID,
+		Status:      paymentStatus.Status,
+	}
+
+	err := retry.Do(func() error {
+		return uc.kafka.SendMessage(ctx, paymentMessage, "checkout_payment_topic")
+	}, retry.Attempts(3), retry.Delay(2*time.Second))
+
+	if err != nil {
+		event.Status = "failed"
+		event.Error = fmt.Sprintf("Payment processing failed: %v", err)
+		uc.eventRepo.UpdateOrderEvent(event)
+		return err
+	}
+
+	event.Status = "completed"
+	return uc.eventRepo.UpdateOrderEvent(event)
+}

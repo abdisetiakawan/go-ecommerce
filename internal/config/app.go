@@ -46,7 +46,7 @@ func Bootstrap(config *BootstrapConfig) {
 
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Validate, userRepository, config.UserUUID, config.Jwt)
 	profileUseCase := usecase.NewProfileUseCase(config.DB, config.Validate, profileRepository)
-	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Validate, orderRepository, productRepository, paymentRepository, shippingRepository, storeRepository, config.UserUUID, config.KafkaProducer, orderEventUC)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Validate, orderRepository, productRepository, storeRepository, config.UserUUID, config.KafkaProducer, orderEventUC)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Validate, productRepository, storeRepository, config.UserUUID)
 	storeUseCase := usecase.NewStoreUseCase(config.DB, config.Validate, storeRepository, config.UserUUID)
 	shippingUseCase := usecase.NewShippingUseCase(config.DB, config.Validate, shippingRepository, storeRepository, orderRepository, config.UserUUID)

@@ -18,7 +18,7 @@ func main() {
 
     logger := config.NewLogger(viperConfig)
     db := config.NewDatabase(viperConfig, logger)
-    validator := config.NewValidator(viperConfig)
+    validator := config.NewValidator()
     jwt := helper.NewJWTHelper(viperConfig)
     uuid := helper.NewUUIDHelper()
 

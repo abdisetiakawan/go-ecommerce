@@ -10,23 +10,20 @@ import (
 	repo "github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type ProductUseCase struct {
 	db          *gorm.DB
-	log         *logrus.Logger
 	val         *validator.Validate
 	productRepo repo.ProductRepository
 	storeRepo   repo.StoreRepository
 	uuid        *helper.UUIDHelper
 }
 
-func NewProductUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, productRepo repo.ProductRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper) interfaces.ProductUseCase {
+func NewProductUseCase(db *gorm.DB, validate *validator.Validate, productRepo repo.ProductRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper) interfaces.ProductUseCase {
 	return &ProductUseCase{
 		db:          db,
-		log:         log,
 		val:         validate,
 		productRepo: productRepo,
 		storeRepo: storeRepo,
@@ -36,12 +33,11 @@ func NewProductUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Vali
 
 
 func (u *ProductUseCase) CreateProduct(ctx context.Context, request *model.RegisterProduct) (*model.ProductResponse, error) {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
 	}
 	storeID, err := u.storeRepo.GetStoreIDByUserID(request.AuthID)
 	if err != nil {
-		u.log.Warnf("Failed to check store: %+v", err)
 		return nil, err
 	}
 	product := &entity.Product{
@@ -54,7 +50,6 @@ func (u *ProductUseCase) CreateProduct(ctx context.Context, request *model.Regis
 		Category: request.Category,
 	}
 	if err := u.productRepo.CreateProduct(product); err != nil {
-		u.log.Warnf("Failed to create product: %+v", err)
 		return nil, err
 	}
 
@@ -63,12 +58,11 @@ func (u *ProductUseCase) CreateProduct(ctx context.Context, request *model.Regis
 
 
 func (u *ProductUseCase) GetProducts(ctx context.Context, request *model.GetProductsRequest) ([]model.ProductResponse, int64, error) {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, 0, err
 	}
 	products, total, err := u.productRepo.GetProducts(request)
 	if err != nil {
-		u.log.WithError(err).Errorf("Failed to get products")
 		return nil, 0, err
 	}
 	responses := make([]model.ProductResponse, len(products))
@@ -79,24 +73,22 @@ func (u *ProductUseCase) GetProducts(ctx context.Context, request *model.GetProd
 }
 
 func (u *ProductUseCase) GetProductById(ctx context.Context, request *model.GetProductRequest) (*model.ProductResponse, error) {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
 	}
 	response, err := u.productRepo.GetProductById(request.UserID, request.ProductUUID)
 	if err != nil {
-		u.log.WithError(err).Errorf("Failed to get product")
 		return nil, err
 	}
 	return converter.ProductToResponse(response), nil
 }
 
 func (u *ProductUseCase) UpdateProduct(ctx context.Context, request *model.UpdateProduct) (*model.ProductResponse, error) {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
 	}
 	product, err := u.productRepo.GetProductById(request.UserID, request.ProductName)
 	if err != nil {
-		u.log.WithError(err).Errorf("Failed to get product")
 		return nil, err
 	}
 	if request.ProductName != "" {
@@ -115,23 +107,20 @@ func (u *ProductUseCase) UpdateProduct(ctx context.Context, request *model.Updat
 		product.Category = request.Category
 	}
 	if err := u.productRepo.UpdateProduct(product); err != nil {
-		u.log.WithError(err).Errorf("Failed to update product")
 		return nil, err
 	}
 	return converter.ProductToResponse(product), nil
 }
 
 func (u *ProductUseCase) DeleteProduct(ctx context.Context, request *model.DeleteProductRequest) error {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return err
 	}
 	product, err := u.productRepo.GetProductById(request.UserID, request.ProductUUID)
 	if err != nil {
-		u.log.WithError(err).Errorf("Failed to get product")
 		return err
 	}
 	if err := u.productRepo.DeleteProduct(product); err != nil {
-		u.log.WithError(err).Errorf("Failed to delete product")
 		return err
 	}
 	return nil

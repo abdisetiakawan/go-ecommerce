@@ -14,6 +14,7 @@ import (
 	eventuc "github.com/abdisetiakawan/go-ecommerce/internal/usecase/event_uc"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
@@ -22,7 +23,6 @@ import (
 type BootstrapConfig struct {
 	DB       *gorm.DB
 	App      *fiber.App
-	Log      *logrus.Logger
 	Validate *validator.Validate
 	Config   *viper.Viper
 	Jwt      *helper.JwtHelper
@@ -34,7 +34,7 @@ type BootstrapConfig struct {
 func Bootstrap(config *BootstrapConfig) {
 	// Event
 	orderEventRepo := eventrepository.NewOrderEventRepository(config.DB)
-	orderEventUC := eventuc.NewOrderEventEvent(config.DB, config.Log, orderEventRepo, config.KafkaProducer)
+	orderEventUC := eventuc.NewOrderEventEvent(config.DB, orderEventRepo, config.KafkaProducer)
 
 	userRepository := repository.NewUserRepository(config.DB)
 	profileRepository := repository.NewProfileRepository(config.DB)
@@ -44,12 +44,12 @@ func Bootstrap(config *BootstrapConfig) {
 	shippingRepository := repository.NewShippingRepository(config.DB, config.KafkaConsumer)
 	paymentRepository := repository.NewPaymentRepository(config.DB, config.KafkaConsumer)
 
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, config.UserUUID, config.Jwt)
-	profileUseCase := usecase.NewProfileUseCase(config.DB, config.Log, config.Validate, profileRepository)
-	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, paymentRepository, shippingRepository, storeRepository, config.UserUUID, config.KafkaProducer, orderEventUC)
-	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, productRepository, storeRepository, config.UserUUID)
-	storeUseCase := usecase.NewStoreUseCase(config.DB, config.Log, config.Validate, storeRepository, config.UserUUID)
-	shippingUseCase := usecase.NewShippingUseCase(config.DB, config.Log, config.Validate, shippingRepository, storeRepository, orderRepository, config.UserUUID)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Validate, userRepository, config.UserUUID, config.Jwt)
+	profileUseCase := usecase.NewProfileUseCase(config.DB, config.Validate, profileRepository)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Validate, orderRepository, productRepository, paymentRepository, shippingRepository, storeRepository, config.UserUUID, config.KafkaProducer, orderEventUC)
+	productUseCase := usecase.NewProductUseCase(config.DB, config.Validate, productRepository, storeRepository, config.UserUUID)
+	storeUseCase := usecase.NewStoreUseCase(config.DB, config.Validate, storeRepository, config.UserUUID)
+	shippingUseCase := usecase.NewShippingUseCase(config.DB, config.Validate, shippingRepository, storeRepository, orderRepository, config.UserUUID)
 	
 	userController := http.NewUserController(userUseCase)
 	profileController := http.NewProfileController(profileUseCase)
@@ -60,27 +60,27 @@ func Bootstrap(config *BootstrapConfig) {
 
 	go func() {
 		if err := paymentRepository.CreatePayment(); err != nil {
-			config.Log.Error(err)
+			log.Error(err)
 		}
 	}()
 	go func() {
 		if err := shippingRepository.CreateShipping(); err != nil {
-			config.Log.Error(err)
+			log.Error(err)
 		}
 	}()
 	go func() {
 		if err := paymentRepository.CancelPayment(); err != nil {
-			config.Log.Error(err)
+			log.Error(err)
 		}
 	}()
 	go func() {
 		if err := shippingRepository.CancelShipping(); err != nil {
-			config.Log.Error(err)
+			log.Error(err)
 		}
 	}()
 	go func() {
 		if err := paymentRepository.CheckoutPayment(); err != nil {
-			config.Log.Error(err)
+			log.Error(err)
 		}
 	}()
 	go func() {

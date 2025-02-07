@@ -16,13 +16,11 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber"
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type OrderUseCase struct {
 	db        *gorm.DB
-	log       *logrus.Logger
 	val       *validator.Validate
 	orderRepo repo.OrderRepository
     productRepo repo.ProductRepository
@@ -34,10 +32,9 @@ type OrderUseCase struct {
 	kafka *helper.KafkaProducer
 }
 
-func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, paymentRepo repo.PaymentRepository, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper, kafka *helper.KafkaProducer, orderEvent ordereventUC.OrderEventUseCase) interfaces.OrderUseCase {
+func NewOrderUseCase(db *gorm.DB, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, paymentRepo repo.PaymentRepository, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper, kafka *helper.KafkaProducer, orderEvent ordereventUC.OrderEventUseCase) interfaces.OrderUseCase {
 	return &OrderUseCase{
 		db:        db,
-		log:       log,
 		val:       validate,
 		orderRepo: orderRepo,
         productRepo: productRepo,
@@ -53,7 +50,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder) (*model.OrderResponse, error) {
 	tx := uc.db.Begin()
     defer tx.Rollback()
-	if err := helper.ValidateStruct(uc.val, uc.log, input); err != nil {
+	if err := helper.ValidateStruct(uc.val, input); err != nil {
 		return nil, err
 	}
 
@@ -66,14 +63,11 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 	_, err := uc.orderRepo.FindStoreByProductUUIDs(productUUIDs)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			uc.log.Warn("One or more products not found")
 			return nil, model.NewApiError(fiber.StatusNotFound, "One or more products not found", nil)
 		}
 		if err == model.ErrBadRequest {
-			uc.log.Warn("Products belong to different stores")
 			return nil, model.NewApiError(fiber.StatusConflict, "Products must belong to the same store", nil)
 		}
-		uc.log.WithError(err).Error("Failed to validate products")
 		return nil, model.ErrInternalServer
 	}
 
@@ -82,18 +76,15 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 	for _, item := range input.Items {
 		product, err := uc.productRepo.FindProductByUUID(item.ProductUUID)
 		if err != nil {
-			uc.log.WithError(err).Error("Failed to find product")
 			return nil, err
 		}
 
 		if product.Stock < item.Quantity {
-			uc.log.Warnf("Product %s has insufficient stock", product.ProductName)
 			return nil, model.NewApiError(fiber.StatusConflict, fmt.Sprintf("Product %s has insufficient stock", product.ProductName), nil)
 		}
 
 		product.Stock -= item.Quantity
         if err := uc.productRepo.UpdateProduct(&product); err != nil {
-            uc.log.WithError(err).Error("Failed to update product stock")
             return nil, model.ErrInternalServer
         }
 
@@ -117,7 +108,6 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 	}
 
 	if err := uc.orderRepo.CreateOrder(order); err != nil {
-		uc.log.WithError(err).Error("Failed to create order")
 		return nil, model.ErrInternalServer
 	}
 
@@ -129,7 +119,6 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 		Status:      "pending",
 	})
 	if err != nil {
-		uc.log.WithError(err).Error("Failed to marshal payment data")
 		return nil, model.ErrInternalServer
 	}
 	
@@ -143,7 +132,6 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 		Status:      "pending",
 	})
 	if err != nil {
-		uc.log.WithError(err).Error("Failed to marshal shipping data")
 		return nil, model.ErrInternalServer
 	}
 	
@@ -169,13 +157,11 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 
 	var paymentMessage eventmodel.PaymentMessage
 	if err := json.Unmarshal(paymentData, &paymentMessage); err != nil {
-		uc.log.WithError(err).Error("Failed to unmarshal payment data")
 		return nil, model.ErrInternalServer
 	}
 
 	var shippingMessage eventmodel.ShippingMessage
 	if err := json.Unmarshal(shippingData, &shippingMessage); err != nil {
-		uc.log.WithError(err).Error("Failed to unmarshal shipping data")
 		return nil, model.ErrInternalServer
 	}
 
@@ -184,12 +170,11 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 
 
 func (uc *OrderUseCase) GetOrdersByBuyer(ctx context.Context, request *model.SearchOrderRequest) ([]model.ListOrderResponse, int64, error) {
-    if err := helper.ValidateStruct(uc.val, uc.log, request); err != nil {
+    if err := helper.ValidateStruct(uc.val, request); err != nil {
         return nil, 0, err
     }
     tasks, total, err := uc.orderRepo.GetOrdersByBuyer(request)
     if err != nil {
-        uc.log.WithError(err).Error("Failed to get orders")
         return nil, 0, model.ErrInternalServer
     }
     responses := make([]model.ListOrderResponse, len(tasks))
@@ -200,12 +185,11 @@ func (uc *OrderUseCase) GetOrdersByBuyer(ctx context.Context, request *model.Sea
 }
 
 func(uc *OrderUseCase) GetOrderByIdByBuyer(ctx context.Context, request *model.GetOrderDetails) (*model.OrderResponse, error) {
-    if err := helper.ValidateStruct(uc.val, uc.log, request); err != nil {
+    if err := helper.ValidateStruct(uc.val, request); err != nil {
         return nil, err
     }
     order, err := uc.orderRepo.GetOrderByIdByBuyer(request)
     if err != nil {
-        uc.log.WithError(err).Error("Failed to get order")
         return nil, err
     }
     return converter.OrderToResponse(order), nil
@@ -215,7 +199,7 @@ func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOr
     tx := uc.db.WithContext(ctx).Begin()
     defer tx.Rollback()
 
-    if err := helper.ValidateStruct(uc.val, uc.log, request); err != nil {
+    if err := helper.ValidateStruct(uc.val, request); err != nil {
         return nil, err
     }
     
@@ -224,7 +208,6 @@ func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOr
         UserID:    request.UserID,
     })
     if err != nil {
-        uc.log.WithError(err).Error("Failed to get order")
         return nil, err
     }
 
@@ -238,7 +221,6 @@ func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOr
     
     order.Status = "cancelled"
     if err := tx.Model(&entity.Order{}).Where("id = ?", order.ID).Update("status", "cancelled").Error; err != nil {
-        uc.log.WithError(err).Error("Failed to update order status")
         return nil, model.ErrInternalServer
     }
 
@@ -247,7 +229,6 @@ func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOr
         Status:  "cancelled",
     })
     if err != nil {
-        uc.log.WithError(err).Error("Failed to marshal payment data")
         return nil, model.ErrInternalServer
     }
 
@@ -256,7 +237,6 @@ func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOr
         Status:  "cancelled",
     })
     if err != nil {
-        uc.log.WithError(err).Error("Failed to marshal shipping data")
         return nil, model.ErrInternalServer
     }
 
@@ -270,19 +250,16 @@ func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOr
     }
 
     if err := tx.Create(orderEvent).Error; err != nil {
-        uc.log.WithError(err).Error("Failed to create order event")
         return nil, model.ErrInternalServer
     }
 
     for _, item := range order.Items {
         if err := tx.Exec("UPDATE products SET stock = stock + ? WHERE id = ?", item.Quantity, item.ProductID).Error; err != nil {
-            uc.log.WithError(err).Error("Failed to update product stock")
             return nil, model.ErrInternalServer
         }
     }
 
     if err := tx.Commit().Error; err != nil {
-        uc.log.WithError(err).Error("Failed to commit transaction")
         return nil, model.ErrInternalServer
     }
 
@@ -296,7 +273,7 @@ func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.Checko
     tx := uc.db.WithContext(ctx).Begin()
     defer tx.Rollback()
 
-    if err := helper.ValidateStruct(uc.val, uc.log, request); err != nil {
+    if err := helper.ValidateStruct(uc.val, request); err != nil {
         return nil, err
     }
 
@@ -305,7 +282,6 @@ func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.Checko
         UserID:    request.UserID,
     })
     if err != nil {
-        uc.log.WithError(err).Error("Failed to get order")
         return nil, err
     }
 
@@ -314,7 +290,6 @@ func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.Checko
     }
     order.Status = "processed"
     if err := uc.orderRepo.UpdateOrder(order); err != nil {
-        uc.log.WithError(err).Error("Failed to update order")
         return nil, model.ErrInternalServer
     }
 	paymentStatus, err := json.Marshal(eventmodel.PaymentMessage{
@@ -322,7 +297,6 @@ func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.Checko
 		Status:  "paid",
 	})
 	if err != nil {
-		uc.log.WithError(err).Error("Failed to marshal payment data")
 		return nil, model.ErrInternalServer
 	}
 	orderEvent := &evententity.OrderEvent{
@@ -333,12 +307,10 @@ func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.Checko
 		PaymentData: paymentStatus,
 	}
 	if err := tx.Create(orderEvent).Error; err != nil {
-		uc.log.WithError(err).Error("Failed to create order event")
 		return nil, model.ErrInternalServer
 	}
 
     if err := tx.Commit().Error; err != nil {
-        uc.log.WithError(err).Error("Failed to commit transaction")
         return nil, model.ErrInternalServer
     }
 
@@ -348,7 +320,7 @@ func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.Checko
 }
 
 func (u *OrderUseCase) GetOrdersBySeller(ctx context.Context, request *model.SearchOrderRequestBySeller) ([]model.OrdersResponseForSeller, int64, error) {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, 0, err
 	}
 	store, err := u.storeRepo.FindStoreByUserID(request.UserID)
@@ -358,7 +330,6 @@ func (u *OrderUseCase) GetOrdersBySeller(ctx context.Context, request *model.Sea
 	request.StoreID = store.ID
 	orders, total, err := u.orderRepo.GetOrdersBySeller(request)
 	if err != nil {
-		u.log.WithError(err).Errorf("Failed to get orders")
 		return nil, 0, err
 	}
 	responses := make([]model.OrdersResponseForSeller, len(orders))
@@ -369,7 +340,7 @@ func (u *OrderUseCase) GetOrdersBySeller(ctx context.Context, request *model.Sea
 }
 
 func (u *OrderUseCase) GetOrderBySeller(ctx context.Context, request *model.GetOrderDetails) (*model.OrderResponse, error) {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
 	}
 	store, err := u.storeRepo.FindStoreByUserID(request.UserID)

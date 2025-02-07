@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	evententity "github.com/abdisetiakawan/go-ecommerce/internal/entity/event_entity"
@@ -12,21 +13,18 @@ import (
 	eventRepo "github.com/abdisetiakawan/go-ecommerce/internal/repository/event_repository/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/event_uc/interfaces"
 	"github.com/avast/retry-go"
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type OrderEventUseCase struct {
 	db        *gorm.DB
-	log       *logrus.Logger
 	eventRepo eventRepo.OrderEventRepository
 	kafka     *helper.KafkaProducer
 }
 
-func NewOrderEventEvent(db *gorm.DB, log *logrus.Logger, eventRepo eventRepo.OrderEventRepository, kafka *helper.KafkaProducer) interfaces.OrderEventUseCase {
+func NewOrderEventEvent(db *gorm.DB, eventRepo eventRepo.OrderEventRepository, kafka *helper.KafkaProducer) interfaces.OrderEventUseCase {
 	return &OrderEventUseCase{
 		db:        db,
-		log:       log,
 		eventRepo: eventRepo,
 		kafka:     kafka,
 	}
@@ -96,7 +94,7 @@ func (uc *OrderEventUseCase) RetryFailedEvents(ctx context.Context) error {
 	for _, event := range events {
 		go func(e evententity.OrderEvent) {
 			if err := uc.ProcessOrderEvent(ctx, &e); err != nil {
-				uc.log.WithError(err).Error("Failed to retry event processing")
+				log.Println(err)
 			}
 		}(event)
 	}

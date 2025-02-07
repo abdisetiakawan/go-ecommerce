@@ -10,28 +10,25 @@ import (
 	repo "github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type ProfileUseCase struct {
 	db *gorm.DB
-	log *logrus.Logger
 	val *validator.Validate
 	profileRepo repo.ProfileRepository
 }
 
-func NewProfileUseCase(db *gorm.DB, log *logrus.Logger, val *validator.Validate, profileRepo repo.ProfileRepository) interfaces.ProfileUseCase {
+func NewProfileUseCase(db *gorm.DB, val *validator.Validate, profileRepo repo.ProfileRepository) interfaces.ProfileUseCase {
 	return &ProfileUseCase{
 		db: db,
-		log: log,
 		val: val,
 		profileRepo: profileRepo,
 	}
 }
 
 func (u *ProfileUseCase) CreateProfile(ctx context.Context, request *model.CreateProfile) (*model.ProfileResponse, error) {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
 	}
 
@@ -45,16 +42,13 @@ func (u *ProfileUseCase) CreateProfile(ctx context.Context, request *model.Creat
 	}
 	hasProfile, err := u.profileRepo.CheckIDProfileByUserID(request.UserID)
 	if err != nil {
-		u.log.Warnf("Failed to check if user has profile: %+v", err)
 		return nil, err
 	}
 	if hasProfile {
-		u.log.Warnf("User already has a profile")
 		return nil, model.ErrConflict
 	}
 
 	if err := u.profileRepo.CreateProfile(profile); err != nil {
-		u.log.Warnf("Failed to create profile: %+v", err)
 		return nil, err
 	}
 
@@ -70,13 +64,12 @@ func (u *ProfileUseCase) GetProfile(ctx context.Context, userID uint) (*model.Pr
 }
 
 func (u *ProfileUseCase) UpdateProfile(ctx context.Context, request *model.UpdateProfile) (*model.ProfileResponse, error) {
-	if err := helper.ValidateStruct(u.val, u.log, request); err != nil {
+	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
 	}
 
 	existingProfile, err := u.profileRepo.GetProfileByUserID(request.UserID)
 	if err != nil {
-		u.log.Warnf("Failed to get profile: %+v", err)
 		return nil, err
 	}
 
@@ -97,7 +90,6 @@ func (u *ProfileUseCase) UpdateProfile(ctx context.Context, request *model.Updat
 	}
 
 	if err := u.profileRepo.UpdateProfile(existingProfile); err != nil {
-		u.log.Warnf("Failed to update profile: %+v", err)
 		return nil, err
 	}
 

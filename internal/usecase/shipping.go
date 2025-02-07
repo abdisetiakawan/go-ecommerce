@@ -11,23 +11,20 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber"
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type ShippingUseCase struct {
 	db           *gorm.DB
-	log          *logrus.Logger
 	shippingRepo repo.ShippingRepository
 	storeRepo    repo.StoreRepository
 	orderRepo    repo.OrderRepository
 	uuid         *helper.UUIDHelper
 }
 
-func NewShippingUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, orderRepo repo.OrderRepository, uuid *helper.UUIDHelper) interfaces.ShippingUseCase {
+func NewShippingUseCase(db *gorm.DB, validate *validator.Validate, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, orderRepo repo.OrderRepository, uuid *helper.UUIDHelper) interfaces.ShippingUseCase {
 	return &ShippingUseCase{
 		db:           db,
-		log:          log,
 		shippingRepo: shippingRepo,
 		storeRepo: storeRepo,
 		orderRepo: orderRepo,

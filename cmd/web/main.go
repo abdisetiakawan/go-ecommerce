@@ -42,7 +42,7 @@ func main() {
         URL: "/swagger.yaml",
     }))
 
-    config.Bootstrap(&config.BootstrapConfig{DB: db, App: app, Log: logger, Validate: validator, Config: viperConfig, Jwt: jwt, UserUUID: uuid, KafkaProducer: kafkaProducer, KafkaConsumer: kafkaConsumer})
+    config.Bootstrap(&config.BootstrapConfig{DB: db, App: app, Validate: validator, Config: viperConfig, Jwt: jwt, UserUUID: uuid, KafkaProducer: kafkaProducer, KafkaConsumer: kafkaConsumer})
     port := viperConfig.GetInt("web.port")
     logger.Infof("Starting server on port %d", port)
     err = app.Listen(fmt.Sprintf(":%d", port))

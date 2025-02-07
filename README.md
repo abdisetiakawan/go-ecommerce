@@ -1,4 +1,3 @@
-
 # Go E-commerce Project
 
 ## Overview
@@ -61,10 +60,8 @@ The project is structured into several layers:
 This project is currently in active development and will continue to evolve with the following planned enhancements:
 
 1. **Redis Caching** : Improve response times and reduce database load by implementing caching for frequently accessed data.
-2. **Message Broker Integration** : Introduce tools like RabbitMQ or Kafka for handling asynchronous tasks such as email notifications, order updates, and inventory management.
-3. **Enhanced Security** : Strengthen security with rate limiting, advanced token management, and encryption enhancements.
-4. **Scalability Improvements** : Add support for horizontal scaling and load balancing to handle increasing user traffic.
-5. **Additional Features** : Include support for advanced search filters, analytics, and more.
+2. **Scalability Improvements** : Add support for horizontal scaling and load balancing to handle increasing user traffic.
+3. **Additional Features** : Include support for advanced search filters, analytics, and more.
 
 ## Conclusion
 

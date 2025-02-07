@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/swagger"
 )
 
-//go:embed swagger.yaml
+//go:embed docs/swagger.yaml
 var swaggerYAML []byte
 
 func main() {

@@ -2,12 +2,16 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	evententity "github.com/abdisetiakawan/go-ecommerce/internal/entity/event_entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model/converter"
+	eventmodel "github.com/abdisetiakawan/go-ecommerce/internal/model/event_model"
 	repo "github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
+	ordereventUC "github.com/abdisetiakawan/go-ecommerce/internal/usecase/event_uc/interfaces"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber"
@@ -20,15 +24,19 @@ type ShippingUseCase struct {
 	storeRepo    repo.StoreRepository
 	orderRepo    repo.OrderRepository
 	uuid         *helper.UUIDHelper
+	orderEvent   ordereventUC.OrderEventUseCase
+	kafka        *helper.KafkaProducer
 }
 
-func NewShippingUseCase(db *gorm.DB, validate *validator.Validate, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, orderRepo repo.OrderRepository, uuid *helper.UUIDHelper) interfaces.ShippingUseCase {
+func NewShippingUseCase(db *gorm.DB, validate *validator.Validate, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, orderRepo repo.OrderRepository, uuid *helper.UUIDHelper, orderEvent ordereventUC.OrderEventUseCase, kafka *helper.KafkaProducer) interfaces.ShippingUseCase {
 	return &ShippingUseCase{
 		db:           db,
 		shippingRepo: shippingRepo,
 		storeRepo: storeRepo,
 		orderRepo: orderRepo,
 		uuid:         uuid,
+		orderEvent:   orderEvent,
+		kafka:        kafka,
 	}
 }
 
@@ -68,19 +76,41 @@ func (c *ShippingUseCase) UpdateShippingStatus(ctx context.Context, request *mod
 	}
 
 	order.Shipping.Status = request.Status
+	var eventType string
 	if request.Status == "shipped" {
+		eventType = "shipping_processed"
 		order.Status = "shipped"
-	}
-	if request.Status == "delivered" {
+	} else if request.Status == "delivered" {
+		eventType = "order_delivered"
 		order.Status = "completed"
+	} else {
+		return nil, model.NewApiError(fiber.StatusBadRequest,
+			fmt.Sprintf("Invalid status: %s", request.Status), nil)
 	}
-
-	if err := c.orderRepo.UpdateOrder(order); err != nil {
-		return nil, err
-	}
+	
 	if err := c.shippingRepo.UpdateShipping(order.Shipping); err != nil {
 		return nil, err
 	}
+	
+	orderStatus, err := json.Marshal(eventmodel.OrderMessage{
+		OrderID: order.ID,
+		Status:  order.Status,
+	})
+	if err != nil {
+		return nil, err
+	}
+	orderEvent := &evententity.OrderEvent{
+		EventUUID:  c.uuid.Generate(),
+		OrderID:    order.ID,
+		Status:     "pending",
+		EventType:  eventType,
+		OrderData: orderStatus,
+	}
+	if err := tx.Create(orderEvent).Error; err != nil {
+		return nil, err
+	}
+
+	go c.orderEvent.ChangeOrderStatusUC(ctx, orderEvent)
 
 	if err := tx.Commit().Error; err != nil {
 		return nil, err

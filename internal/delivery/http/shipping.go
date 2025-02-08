@@ -17,6 +17,19 @@ func NewShippingController(usecase interfaces.ShippingUseCase) *ShippingControll
 	}
 }
 
+// UpdateShippingStatus handles PATCH /shippings/{order_uuid} endpoint for updating shipping status by seller.
+//
+// Parameters:
+//
+//	* ctx: fiber.Ctx - Context for the request, including the order UUID path parameter.
+//
+// Returns:
+//
+//	* 200 OK: model.OrderResponse if shipping status is updated successfully.
+//
+// Errors:
+//
+//	* Propagates error from use case layer if update fails.
 func (c *ShippingController) UpdateShippingStatus(ctx *fiber.Ctx) error {
 	authID := middleware.GetUser(ctx)
 	request := &model.UpdateShippingStatusRequest{

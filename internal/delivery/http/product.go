@@ -18,6 +18,19 @@ func NewProductController(usecase interfaces.ProductUseCase) *ProductController 
 	}
 }
 
+// GetProducts handles GET /products endpoint for buyer and seller.
+//
+// Parameters:
+//
+//	* ctx: fiber.Ctx - Context for the request, including query parameters for filtering products by search, category, price range, page, and limit.
+//
+// Returns:
+//
+//	* 200 OK: model.ListProductResponse with pagination metadata if products are retrieved successfully.
+//
+// Errors:
+//
+//	* Propagates error from use case layer if retrieval fails.
 func (c *ProductController) GetProducts(ctx *fiber.Ctx) error {
 	authID := middleware.GetUser(ctx)
 	request := &model.GetProductsRequest{
@@ -42,6 +55,20 @@ func (c *ProductController) GetProducts(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get products", fiber.StatusOK, paging, nil))
 }
 
+
+// GetProductById handles GET /products/{product_uuid} endpoint for buyer and seller.
+//
+// Parameters:
+//
+//	* ctx: fiber.Ctx - Context for the request, including the product UUID path parameter.
+//
+// Returns:
+//
+//	* 200 OK: model.ProductResponse if product is retrieved successfully.
+//
+// Errors:
+//
+//	* Propagates error from use case layer if retrieval fails.
 func (c *ProductController) GetProductById(ctx *fiber.Ctx) error {
 	authID := middleware.GetUser(ctx)
 	request := &model.GetProductRequest{
@@ -54,6 +81,20 @@ func (c *ProductController) GetProductById(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get product", fiber.StatusOK, nil, nil))
 }
+
+// UpdateProduct handles PATCH /products/{product_uuid} endpoint.
+//
+// Parameters:
+//
+//   * ctx: fiber.Ctx - Context for the request, including the product UUID path parameter.
+//
+// Returns:
+//
+//   * 200 OK: model.ProductResponse if product is updated successfully.
+//
+// Errors:
+//
+//   * Propagates error from use case layer if update fails.
 
 func (c *ProductController) UpdateProduct(ctx *fiber.Ctx) error {
 	authID := middleware.GetUser(ctx)
@@ -71,6 +112,22 @@ func (c *ProductController) UpdateProduct(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully updated product", fiber.StatusOK, nil, nil))
 }
 
+
+
+// DeleteProduct handles DELETE /products/{product_uuid} endpoint.
+//
+// Parameters:
+//
+//   * ctx: fiber.Ctx - Context for the request, including the product UUID path parameter.
+//
+// Returns:
+//
+//   * 204 No Content: if the product is deleted successfully.
+//
+// Errors:
+//
+//   * Propagates error from use case layer if deletion fails.
+
 func (c *ProductController) DeleteProduct(ctx *fiber.Ctx) error {
 	authID := middleware.GetUser(ctx)
 	request := &model.DeleteProductRequest{
@@ -82,7 +139,19 @@ func (c *ProductController) DeleteProduct(ctx *fiber.Ctx) error {
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
-
+// RegisterProduct handles POST /products endpoint.
+//
+// Parameters:
+//
+//   * ctx: fiber.Ctx - Context for the request, including the authenticated user and request body for product registration.
+//
+// Returns:
+//
+//   * 201 Created: model.ProductResponse if product is registered successfully.
+//
+// Errors:
+//
+//   * Propagates error from use case layer if registration fails.
 func (c *ProductController) RegisterProduct(ctx *fiber.Ctx) error {
 	authID := middleware.GetUser(ctx)
 	request := new(model.RegisterProduct)

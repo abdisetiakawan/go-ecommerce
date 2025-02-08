@@ -1,18 +1,25 @@
 package repository
 
 import (
+	"context"
+	"encoding/json"
+
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
+	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
+	eventmodel "github.com/abdisetiakawan/go-ecommerce/internal/model/event_model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type OrderRepository struct {
+    kafka *helper.KafkaConsumer
 	DB *gorm.DB
 }
 
-func NewOrderRepository(DB *gorm.DB) interfaces.OrderRepository {
-	return &OrderRepository{DB}
+func NewOrderRepository(DB *gorm.DB, kafka *helper.KafkaConsumer) interfaces.OrderRepository {
+	return &OrderRepository{kafka, DB}
 }
 
 func (r *OrderRepository) FindStoreByProductUUIDs(productUUIDs []string) (uint, error) {
@@ -145,4 +152,32 @@ func (r *OrderRepository) GetOrderBySeller(order_uuid string, store_id uint) (*e
     }
 
     return &order, nil
+}
+
+func (r *OrderRepository) ChangeOrderStatus() error {
+    consumer, err := r.kafka.Consume(context.Background(), "change_order_topic")
+    if err != nil {
+        return err
+    }
+    defer consumer.Close()
+
+    for {
+        select {
+        case msg := <-consumer.Messages():
+            var orderMessage eventmodel.OrderMessage
+            err := json.Unmarshal(msg.Value, &orderMessage)
+            if err != nil {
+                logrus.WithError(err).Error("Failed to unmarshal order message")
+                continue
+            }
+            if err := r.DB.Model(&entity.Order{}).
+                Where("id = ?", orderMessage.OrderID).
+                Update("status", orderMessage.Status).Error; err != nil {
+                logrus.WithError(err).Error("Failed to update order status")
+            }
+
+        case err := <-consumer.Errors():
+            logrus.WithError(err).Error("Failed to consume order topic")
+        }
+    }
 }

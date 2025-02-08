@@ -25,10 +25,9 @@ type ShippingUseCase struct {
 	orderRepo    repo.OrderRepository
 	uuid         *helper.UUIDHelper
 	orderEvent   ordereventUC.OrderEventUseCase
-	kafka        *helper.KafkaProducer
 }
 
-func NewShippingUseCase(db *gorm.DB, validate *validator.Validate, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, orderRepo repo.OrderRepository, uuid *helper.UUIDHelper, orderEvent ordereventUC.OrderEventUseCase, kafka *helper.KafkaProducer) interfaces.ShippingUseCase {
+func NewShippingUseCase(db *gorm.DB, validate *validator.Validate, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, orderRepo repo.OrderRepository, uuid *helper.UUIDHelper, orderEvent ordereventUC.OrderEventUseCase) interfaces.ShippingUseCase {
 	return &ShippingUseCase{
 		db:           db,
 		shippingRepo: shippingRepo,
@@ -36,7 +35,6 @@ func NewShippingUseCase(db *gorm.DB, validate *validator.Validate, shippingRepo 
 		orderRepo: orderRepo,
 		uuid:         uuid,
 		orderEvent:   orderEvent,
-		kafka:        kafka,
 	}
 }
 

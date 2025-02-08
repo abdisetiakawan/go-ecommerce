@@ -27,10 +27,9 @@ type OrderUseCase struct {
     storeRepo repo.StoreRepository
 	orderEvent ordereventUC.OrderEventUseCase
 	uuid      *helper.UUIDHelper
-	kafka *helper.KafkaProducer
 }
 
-func NewOrderUseCase(db *gorm.DB, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper, kafka *helper.KafkaProducer, orderEvent ordereventUC.OrderEventUseCase) interfaces.OrderUseCase {
+func NewOrderUseCase(db *gorm.DB, validate *validator.Validate, orderRepo repo.OrderRepository, productRepo repo.ProductRepository, storeRepo repo.StoreRepository, uuid *helper.UUIDHelper, orderEvent ordereventUC.OrderEventUseCase) interfaces.OrderUseCase {
 	return &OrderUseCase{
 		db:        db,
 		val:       validate,
@@ -39,7 +38,6 @@ func NewOrderUseCase(db *gorm.DB, validate *validator.Validate, orderRepo repo.O
         storeRepo: storeRepo,
 		uuid:      uuid,
 		orderEvent: orderEvent,
-		kafka: kafka,
 	}
 }
 

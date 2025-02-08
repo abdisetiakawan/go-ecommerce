@@ -11,4 +11,5 @@ type OrderEventUseCase interface {
 	RetryFailedEvents(ctx context.Context) error
 	CancelOrderEvent(ctx context.Context, event *evententity.OrderEvent) error
 	CheckoutOrderEvent(ctx context.Context, event *evententity.OrderEvent) error
+	ChangeOrderStatusUC(ctx context.Context,event *evententity.OrderEvent) error
 }

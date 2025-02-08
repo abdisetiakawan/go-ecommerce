@@ -38,7 +38,7 @@ func Bootstrap(config *BootstrapConfig) {
 
 	userRepository := repository.NewUserRepository(config.DB)
 	profileRepository := repository.NewProfileRepository(config.DB)
-	orderRepository := repository.NewOrderRepository(config.DB)
+	orderRepository := repository.NewOrderRepository(config.DB, config.KafkaConsumer)
 	productRepository := repository.NewProductRepository(config.DB)
 	storeRepository := repository.NewStoreRepository(config.DB)
 	shippingRepository := repository.NewShippingRepository(config.DB, config.KafkaConsumer)
@@ -49,7 +49,7 @@ func Bootstrap(config *BootstrapConfig) {
 	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Validate, orderRepository, productRepository, storeRepository, config.UserUUID, config.KafkaProducer, orderEventUC)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Validate, productRepository, storeRepository, config.UserUUID)
 	storeUseCase := usecase.NewStoreUseCase(config.DB, config.Validate, storeRepository, config.UserUUID)
-	shippingUseCase := usecase.NewShippingUseCase(config.DB, config.Validate, shippingRepository, storeRepository, orderRepository, config.UserUUID)
+	shippingUseCase := usecase.NewShippingUseCase(config.DB, config.Validate, shippingRepository, storeRepository, orderRepository, config.UserUUID, orderEventUC, config.KafkaProducer)
 	
 	userController := http.NewUserController(userUseCase)
 	profileController := http.NewProfileController(profileUseCase)
@@ -80,6 +80,11 @@ func Bootstrap(config *BootstrapConfig) {
 	}()
 	go func() {
 		if err := paymentRepository.CheckoutPayment(); err != nil {
+			log.Error(err)
+		}
+	}()
+	go func() {
+		if err := orderRepository.ChangeOrderStatus(); err != nil {
 			log.Error(err)
 		}
 	}()

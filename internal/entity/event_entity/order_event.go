@@ -16,5 +16,6 @@ type OrderEvent struct {
 	Status       string         `gorm:"type:enum('pending','completed','failed');not null"`
 	PaymentData json.RawMessage `gorm:"type:json"`
 	ShippingData json.RawMessage `gorm:"type:json"`
+	OrderData json.RawMessage `gorm:"type:json"`
 	Error string `gorm:"type:text"`
 }

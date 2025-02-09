@@ -22,6 +22,10 @@ type OrderEventUseCase struct {
 	kafka     *helper.KafkaProducer
 }
 
+// NewOrderEventEvent creates a new instance of OrderEventUseCase.
+// It takes database connection, event repository and kafka producer as an argument.
+// The returned OrderEventUseCase is ready to use and contains all the necessary dependencies.
+
 func NewOrderEventEvent(db *gorm.DB, eventRepo eventRepo.OrderEventRepository, kafka *helper.KafkaProducer) interfaces.OrderEventUseCase {
 	return &OrderEventUseCase{
 		db:        db,
@@ -30,6 +34,12 @@ func NewOrderEventEvent(db *gorm.DB, eventRepo eventRepo.OrderEventRepository, k
 	}
 }
 
+// ProcessOrderEvent is a function that takes a context and an event entity as arguments.
+// It attempts to process the payment and shipping message by sending the message to kafka topic.
+// If the message sending process fails, it will retry up to 3 times with 2 seconds delay between each attempt.
+// If the retry also fails, it will update the status of the event entity to "failed" and return an error.
+// If the message sending process is successful, it will update the status of the event entity to "completed".
+// The function will return an error if the event entity status is not "pending" or if there is an error when updating the event entity.
 func (uc *OrderEventUseCase) ProcessOrderEvent(ctx context.Context, event *evententity.OrderEvent) error {
 	var paymentData eventmodel.PaymentMessage
 	var shippingData eventmodel.ShippingMessage
@@ -85,6 +95,11 @@ func (uc *OrderEventUseCase) ProcessOrderEvent(ctx context.Context, event *event
 	return uc.eventRepo.UpdateOrderEvent(event)
 }
 
+// RetryFailedEvents retrieves all order events with a "failed" status from the past 24 hours
+// and attempts to reprocess each event concurrently. For each event, it calls the
+// ProcessOrderEvent function. If an error occurs during processing, it logs the error
+// message. The function returns an error if the retrieval of failed events fails.
+
 func (uc *OrderEventUseCase) RetryFailedEvents(ctx context.Context) error {
 	events, err := uc.eventRepo.GetFailedEvents(24 * time.Hour)
 	if err != nil {
@@ -101,6 +116,12 @@ func (uc *OrderEventUseCase) RetryFailedEvents(ctx context.Context) error {
 	return nil
 }
 
+// CancelOrderEvent takes a context and an event entity as arguments.
+// It attempts to cancel the payment and shipping message by sending the message to kafka topic.
+// If the message sending process fails, it will retry up to 3 times with 2 seconds delay between each attempt.
+// If the retry also fails, it will update the status of the event entity to "failed" and return an error.
+// If the message sending process is successful, it will update the status of the event entity to "completed".
+// The function will return an error if the event entity status is not "pending" or if there is an error when updating the event entity.
 func (uc *OrderEventUseCase) CancelOrderEvent(ctx context.Context, event *evententity.OrderEvent) error {
 	var paymentStatus eventmodel.PaymentMessage
 	var shippingStatus eventmodel.ShippingMessage
@@ -148,6 +169,12 @@ func (uc *OrderEventUseCase) CancelOrderEvent(ctx context.Context, event *evente
 	return uc.eventRepo.UpdateOrderEvent(event)
 }
 
+// CheckoutOrderEvent takes a context and an event entity as arguments.
+// It attempts to send a message to kafka topic to mark the order as "paid".
+// If the message sending process fails, it will retry up to 3 times with 2 seconds delay between each attempt.
+// If the retry also fails, it will update the status of the event entity to "failed" and return an error.
+// If the message sending process is successful, it will update the status of the event entity to "completed".
+// The function will return an error if there is an error when updating the event entity.
 func (uc *OrderEventUseCase) CheckoutOrderEvent(ctx context.Context, event *evententity.OrderEvent) error {
 	var paymentStatus eventmodel.PaymentMessage
 	
@@ -175,6 +202,12 @@ func (uc *OrderEventUseCase) CheckoutOrderEvent(ctx context.Context, event *even
 	return uc.eventRepo.UpdateOrderEvent(event)
 }
 
+// ChangeOrderStatusUC takes a context and an event entity as arguments.
+// It attempts to send a message to kafka topic to change the order status.
+// If the message sending process fails, it will retry up to 3 times with 2 seconds delay between each attempt.
+// If the retry also fails, it will update the status of the event entity to "failed" and return an error.
+// If the message sending process is successful, it will update the status of the event entity to "completed".
+// The function will return an error if there is an error when updating the event entity.
 func (uc *OrderEventUseCase) ChangeOrderStatusUC(ctx context.Context,event *evententity.OrderEvent) error {
 	var orderStatus eventmodel.OrderMessage
 	if err := json.Unmarshal(event.OrderData, &orderStatus); err != nil {

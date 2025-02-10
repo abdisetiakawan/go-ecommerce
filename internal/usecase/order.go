@@ -41,6 +41,14 @@ func NewOrderUseCase(db *gorm.DB, validate *validator.Validate, orderRepo repo.O
 	}
 }
 
+// CreateOrder validates the input, verifies product availability and stock,
+// and creates an order with associated order items. It ensures all products
+// belong to the same store and reduces stock for each product. The method
+// then creates an order event with payment and shipping data and commits the
+// transaction. If any step fails, the transaction is rolled back, and an
+// appropriate error is returned. The function launches an asynchronous
+// process to handle the order event and returns the order response upon success.
+
 func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrder) (*model.OrderResponse, error) {
 	tx := uc.db.Begin()
     defer tx.Rollback()
@@ -163,6 +171,13 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input *model.CreateOrde
 }
 
 
+// GetOrdersByBuyer returns a list of orders made by a buyer, given a search request.
+//
+// The search request can filter by status, start date, end date, page, and limit.
+//
+// The response is a list of ListOrderResponse, which only contains the basic information of the order.
+//
+// The total is the total number of orders that match the search request.
 func (uc *OrderUseCase) GetOrdersByBuyer(ctx context.Context, request *model.SearchOrderRequest) ([]model.ListOrderResponse, int64, error) {
     if err := helper.ValidateStruct(uc.val, request); err != nil {
         return nil, 0, err
@@ -178,6 +193,11 @@ func (uc *OrderUseCase) GetOrdersByBuyer(ctx context.Context, request *model.Sea
     return responses, total, nil
 }
 
+// GetOrderByIdByBuyer returns a single order by order UUID and user ID.
+//
+// The response is a OrderResponse, which contains the detailed information of the order.
+//
+// If the order is not found, it returns a 404 error.
 func(uc *OrderUseCase) GetOrderByIdByBuyer(ctx context.Context, request *model.GetOrderDetails) (*model.OrderResponse, error) {
     if err := helper.ValidateStruct(uc.val, request); err != nil {
         return nil, err
@@ -189,6 +209,15 @@ func(uc *OrderUseCase) GetOrderByIdByBuyer(ctx context.Context, request *model.G
     return converter.OrderToResponse(order), nil
 }
 
+    // CancelOrder cancels an order with the given order UUID and user ID.
+    //
+    // If the order is not found, it returns a 404 error.
+    //
+    // If the order status is not "pending", it returns a 409 error.
+    //
+    // The function will return an error if there is an error when updating the order in the database.
+    //
+    // The function will also publish an event to kafka topic to cancel the order payment and shipping.
 func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOrderRequest) (*model.OrderResponse, error) {
     tx := uc.db.WithContext(ctx).Begin()
     defer tx.Rollback()
@@ -263,6 +292,10 @@ func (uc *OrderUseCase) CancelOrder(ctx context.Context, request *model.CancelOr
     return converter.OrderToResponse(order), nil
 }
 
+    // CheckoutOrder checks out an order. It will only work if the order status is "pending". If the order status is not "pending", it will return an error.
+    // It will update the order status to "processed" and create an order event with type "payment_processed" and status "pending".
+    // It will then commit the transaction and send the order event to kafka topic to be processed.
+    // If there is an error when committing the transaction or sending the order event, it will rollback the transaction and return an error.
 func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.CheckoutOrderRequest) (*model.OrderResponse, error) {
     tx := uc.db.WithContext(ctx).Begin()
     defer tx.Rollback()
@@ -313,6 +346,17 @@ func (uc *OrderUseCase) CheckoutOrder(ctx context.Context, request *model.Checko
     return converter.OrderToResponse(order), nil
 }
 
+// GetOrdersBySeller retrieves a list of orders for a specific seller based on the provided search request.
+// 
+// The function first validates the input request structure. It then identifies the store associated
+// with the seller's user ID and fetches orders linked to that store. The search request can filter
+// orders by status, page, and limit.
+//
+// Returns:
+// - A slice of OrdersResponseForSeller containing the details of each order.
+// - The total number of orders that match the search criteria.
+// - An error, if any issue occurs during the process.
+
 func (u *OrderUseCase) GetOrdersBySeller(ctx context.Context, request *model.SearchOrderRequestBySeller) ([]model.OrdersResponseForSeller, int64, error) {
 	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, 0, err
@@ -333,6 +377,14 @@ func (u *OrderUseCase) GetOrdersBySeller(ctx context.Context, request *model.Sea
 	return responses, total, nil
 }
 
+// GetOrderBySeller retrieves a single order by order UUID and user ID.
+// 
+// The function first validates the input request structure. It then identifies the store associated
+// with the seller's user ID and fetches the order linked to that store.
+// 
+// Returns:
+// - A OrderResponse containing the details of the order.
+// - An error, if any issue occurs during the process.
 func (u *OrderUseCase) GetOrderBySeller(ctx context.Context, request *model.GetOrderDetails) (*model.OrderResponse, error) {
 	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err

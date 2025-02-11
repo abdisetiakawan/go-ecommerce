@@ -27,6 +27,20 @@ type ShippingUseCase struct {
 	orderEvent   ordereventUC.OrderEventUseCase
 }
 
+// NewShippingUseCase creates a new instance of ShippingUseCase.
+// 
+// Parameters:
+//   - db: gorm.DB - Database connection for handling data operations.
+//   - validate: validator.Validate - Validator instance for input validation.
+//   - shippingRepo: repo.ShippingRepository - Repository for accessing shipping data.
+//   - storeRepo: repo.StoreRepository - Repository for accessing store data.
+//   - orderRepo: repo.OrderRepository - Repository for accessing order data.
+//   - uuid: helper.UUIDHelper - Helper for generating UUIDs.
+//   - orderEvent: ordereventUC.OrderEventUseCase - Use case for handling order events.
+//
+// Returns:
+//   - interfaces.ShippingUseCase: A new ShippingUseCase instance with all necessary dependencies.
+
 func NewShippingUseCase(db *gorm.DB, validate *validator.Validate, shippingRepo repo.ShippingRepository, storeRepo repo.StoreRepository, orderRepo repo.OrderRepository, uuid *helper.UUIDHelper, orderEvent ordereventUC.OrderEventUseCase) interfaces.ShippingUseCase {
 	return &ShippingUseCase{
 		db:           db,
@@ -38,6 +52,31 @@ func NewShippingUseCase(db *gorm.DB, validate *validator.Validate, shippingRepo 
 	}
 }
 
+// UpdateShippingStatus updates the shipping status of an order.
+//
+// This function will start a transaction to update the order shipping status. If the order status is not "pending", it will return a 409 error.
+//
+// If the order status is "pending", it will check if the payment status is "paid". If the payment status is not "paid", it will return a 409 error.
+//
+// If the payment status is "paid", it will check if the shipping status is "pending". If the shipping status is not "pending", it will return a 409 error.
+//
+// If the shipping status is "pending", it will check if the request status is "shipped" or "delivered". If the request status is not "shipped" or "delivered", it will return a 400 error.
+//
+// If the request status is "shipped", it will update the shipping status to "shipped" and the order status to "shipped". If the request status is "delivered", it will update the shipping status to "delivered" and the order status to "completed".
+//
+// After updating the order, it will publish an event to kafka topic to update the order status.
+//
+// If there is an error when committing the transaction or publishing the event, it will rollback the transaction and return an error.
+//
+// Returns:
+//
+//	* 200 OK: model.OrderResponse if order shipping status is updated successfully.
+//
+// Errors:
+//
+//	* 400 Bad Request: if the request status is not "shipped" or "delivered".
+//	* 409 Conflict: if the order status is not "pending" or the payment status is not "paid" or the shipping status is not "pending".
+//	* Propagates error from use case layer if update fails.
 func (c *ShippingUseCase) UpdateShippingStatus(ctx context.Context, request *model.UpdateShippingStatusRequest) (*model.OrderResponse, error) {
 	tx := c.db.WithContext(ctx).Begin()
 	defer tx.Rollback()

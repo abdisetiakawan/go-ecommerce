@@ -32,6 +32,11 @@ func NewProductUseCase(db *gorm.DB, validate *validator.Validate, productRepo re
 }
 
 
+// CreateProduct creates a new product and returns the newly created product in the response.
+// It first validates the request body and checks if the user is a seller.
+// If the user is not a seller, it returns a 403 error.
+// If the request body is invalid, it returns a 400 error.
+// If the product cannot be created, it returns a 500 error.
 func (u *ProductUseCase) CreateProduct(ctx context.Context, request *model.RegisterProduct) (*model.ProductResponse, error) {
 	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
@@ -57,6 +62,20 @@ func (u *ProductUseCase) CreateProduct(ctx context.Context, request *model.Regis
 }
 
 
+// GetProducts retrieves a list of products based on the provided request filters.
+// It validates the request, queries the product repository, and converts the results
+// into a list of product responses.
+//
+// Parameters:
+//   - ctx: Context for the request, allowing for cancellation and timeouts.
+//   - request: Pointer to GetProductsRequest containing filters like search terms,
+//     category, price range, pagination, etc.
+//
+// Returns:
+//   - A slice of ProductResponse containing the product details.
+//   - An int64 representing the total number of products that match the query.
+//   - An error, if any occurs during validation or data retrieval.
+
 func (u *ProductUseCase) GetProducts(ctx context.Context, request *model.GetProductsRequest) ([]model.ProductResponse, int64, error) {
 	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, 0, err
@@ -72,6 +91,20 @@ func (u *ProductUseCase) GetProducts(ctx context.Context, request *model.GetProd
 	return responses, total, nil
 }
 
+// GetProductById retrieves a product by its UUID and the user ID of the owner of the product.
+// 
+// Parameters:
+// 
+// 	* ctx: context.Context - Context for the request.
+// 	* request: *model.GetProductRequest - Request containing user ID and product UUID.
+// 
+// Returns:
+// 
+// 	* 200 OK: model.ProductResponse if product is retrieved successfully.
+// 
+// Errors:
+// 
+// 	* Propagates error from use case layer if retrieval fails.
 func (u *ProductUseCase) GetProductById(ctx context.Context, request *model.GetProductRequest) (*model.ProductResponse, error) {
 	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
@@ -83,6 +116,10 @@ func (u *ProductUseCase) GetProductById(ctx context.Context, request *model.GetP
 	return converter.ProductToResponse(response), nil
 }
 
+// UpdateProduct updates a product by its UUID and the user ID of the owner of the product.
+// It first checks if the product exists and if the user is the owner of the product.
+// If the product does not exist or the user is not the owner, it returns an error.
+// If the product exists and the user is the owner, it updates the product and returns the updated product.
 func (u *ProductUseCase) UpdateProduct(ctx context.Context, request *model.UpdateProduct) (*model.ProductResponse, error) {
 	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
@@ -112,6 +149,10 @@ func (u *ProductUseCase) UpdateProduct(ctx context.Context, request *model.Updat
 	return converter.ProductToResponse(product), nil
 }
 
+// DeleteProduct deletes a product by its UUID and the user ID of the owner of the product.
+// It first checks if the product exists and if the user is the owner of the product.
+// If the product does not exist or the user is not the owner, it returns an error.
+// If the product exists and the user is the owner, it deletes the product and returns nil.
 func (u *ProductUseCase) DeleteProduct(ctx context.Context, request *model.DeleteProductRequest) error {
 	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return err

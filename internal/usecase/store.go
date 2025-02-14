@@ -29,6 +29,11 @@ func NewStoreUseCase(db *gorm.DB, validate *validator.Validate, storeRepo repo.S
 	}
 }
 
+// RegisterStore registers a new store and returns the newly created store in the response.
+// It first validates the request body and checks if the user is a seller.
+// If the user is not a seller, it returns a 403 error.
+// If the request body is invalid, it returns a 400 error.
+// If the store cannot be created, it returns a 500 error.
 func (uc *StoreUseCase) RegisterStore(ctx context.Context, request *model.RegisterStore) (*model.StoreResponse, error) {
 	if err := helper.ValidateStruct(uc.val, request); err != nil {
 		return nil, err
@@ -54,6 +59,16 @@ func (uc *StoreUseCase) RegisterStore(ctx context.Context, request *model.Regist
 	return converter.StoreToResponse(store), nil
 }
 
+// GetStore retrieves a store by the user ID.
+//
+// Parameters:
+//   * ctx: context.Context - Context for the request.
+//   * id: uint - User ID associated with the store.
+//
+// Returns:
+//   * model.StoreResponse: Store information if retrieval is successful.
+//   * error: Propagates error from the repository layer if retrieval fails.
+
 func (uc *StoreUseCase) GetStore(ctx context.Context, id uint) (*model.StoreResponse, error) {
 	store, err := uc.storeRepo.FindStoreByUserID(id)
 	if err != nil {
@@ -61,6 +76,19 @@ func (uc *StoreUseCase) GetStore(ctx context.Context, id uint) (*model.StoreResp
 	}
 	return converter.StoreToResponse(&store), nil
 }
+
+// UpdateStore updates the information of a store associated with the given user ID.
+// It first validates the request structure. If validation fails, it returns an error.
+// It retrieves the store by user ID, and updates the store's name and description based on the request.
+// If the store does not exist, or if any error occurs during the update process, it returns an error.
+// 
+// Parameters:
+//   * ctx: context.Context - Context for the request.
+//   * request: *model.UpdateStore - Request containing store update details.
+//
+// Returns:
+//   * model.StoreResponse: The updated store information.
+//   * error: If an error occurs during validation, retrieval, or update.
 
 func (uc *StoreUseCase) UpdateStore(ctx context.Context, request *model.UpdateStore) (*model.StoreResponse, error) {
 	if err := helper.ValidateStruct(uc.val, request); err != nil {

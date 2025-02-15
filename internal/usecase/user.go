@@ -32,6 +32,22 @@ func NewUserUseCase(db *gorm.DB, validate *validator.Validate, userRepo repo.Use
 	}
 }
 
+	// Register registers a new user in the system and returns an authentication response.
+	//
+	// Parameters:
+	//
+	//   * ctx: context.Context - Context for the request, including the request body for user registration.
+	//   * request: *model.RegisterUser - Request body for user registration.
+	//
+	// Returns:
+	//
+	//   * 201 Created: model.AuthResponse if user is registered successfully.
+	//
+	// Errors:
+	//
+	//   * 400 Bad Request: validation error or request body is invalid.
+	//   * 409 Conflict: if email or username already exists.
+	//   * 500 Internal Server Error: if there is an error when registering the user in the database.
 func (uc *UserUseCase) Register(ctx context.Context, request *model.RegisterUser) (*model.AuthResponse, error) {
 	if err := helper.ValidateStruct(uc.val, request); err != nil {
 		return nil, err
@@ -92,6 +108,24 @@ func (uc *UserUseCase) Register(ctx context.Context, request *model.RegisterUser
 	return converter.AuthToResponse(user), nil
 }
 
+// Login authenticates a user by validating their email and password.
+// 
+// It first validates the request structure. If the validation fails, it returns an error.
+// Then, it retrieves the user by email. If the user is not found, it returns an error.
+// It compares the hashed password stored for the user with the provided password.
+// If the password is incorrect, it returns an error.
+// If the password is correct, it generates a new access token and refresh token for the user.
+// 
+// Parameters:
+// 
+//   * ctx: context.Context - Context for the request.
+//   * request: *model.LoginUser - Request body containing user login credentials.
+// 
+// Returns:
+// 
+//   * model.AuthResponse: Contains user data and tokens if authentication is successful.
+//   * error: If an error occurs during the login process, such as validation failure or incorrect credentials.
+
 func (uc *UserUseCase) Login(ctx context.Context, request *model.LoginUser) (*model.AuthResponse, error) {
 	if err := helper.ValidateStruct(uc.val, request); err != nil {
 		return nil, err
@@ -127,6 +161,12 @@ func (uc *UserUseCase) Login(ctx context.Context, request *model.LoginUser) (*mo
 
 
 
+// ChangePassword changes a user's password if the old password is correct.
+// It first checks if the new password and confirm password match.
+// If they do not match, it returns an error.
+// It then checks if the old password is correct.
+// If the old password is incorrect, it returns an error.
+// If the old password is correct, it updates the user's password and returns nil.
 func (uc *UserUseCase) ChangePassword(ctx context.Context, request *model.ChangePassword) error {
 	if err := helper.ValidateStruct(uc.val, request); err != nil {
 		return err

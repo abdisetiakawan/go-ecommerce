@@ -43,7 +43,7 @@ func main() {
     }))
 
     config.Bootstrap(&config.BootstrapConfig{DB: db, App: app, Validate: validator, Config: viperConfig, Jwt: jwt, UserUUID: uuid, KafkaProducer: kafkaProducer, KafkaConsumer: kafkaConsumer})
-    port := viperConfig.GetInt("web.port")
+    port := viperConfig.GetInt("PORT")
     logger.Infof("Starting server on port %d", port)
     err = app.Listen(fmt.Sprintf(":%d", port))
     if err != nil {

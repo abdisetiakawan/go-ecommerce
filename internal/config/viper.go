@@ -1,23 +1,19 @@
 package config
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/spf13/viper"
 )
 
-
-
 func NewViper() *viper.Viper {
-	config := viper.New()
+	v := viper.New()
+	v.AutomaticEnv()
+	v.SetEnvPrefix("")
 
-	config.SetConfigName("config")
-	config.SetConfigType("json")
-	config.AddConfigPath("./")
-
-	err := config.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("error to load config.json %w", err))
+	v.SetConfigFile(".env")
+	if err := v.ReadInConfig(); err != nil {
+		log.Println("info: .env file not found, using environment variables")
 	}
-	return config
+	return v
 }

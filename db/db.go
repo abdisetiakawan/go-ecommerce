@@ -57,19 +57,13 @@ func Migrate(db *gorm.DB, log *logrus.Logger) {
 func main() {
 	viperConfig := config.NewViper()
 
-	cfg, err := config.LoadConfig(viperConfig)
-	if err != nil {
-		log.Fatalf("Failed to load config.json : %v", err)
-	}
+	username := viperConfig.GetString("database.username")
+	password := viperConfig.GetString("database.password")
+	host := viperConfig.GetString("database.host")
+	port := viperConfig.GetInt("database.port")
+	database := viperConfig.GetString("database.name")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local",
-		cfg.Database.User,
-		cfg.Database.Password,
-		cfg.Database.Host,
-		cfg.Database.Port,
-		cfg.Database.Name,
-		cfg.Database.Charset,
-	)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, database)
 
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})

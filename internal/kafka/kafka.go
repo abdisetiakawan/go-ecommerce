@@ -11,7 +11,7 @@ type KafkaConfig struct {
 
 func NewKafkaConfig(viper *viper.Viper) *KafkaConfig {
     return &KafkaConfig{
-        Brokers: viper.GetStringSlice("kafka.brokers"),
+        Brokers: viper.GetStringSlice("KAFKA_BROKERS"),
     }
 }
 

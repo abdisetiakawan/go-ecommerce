@@ -35,9 +35,6 @@ RUN go build \
 
 FROM scratch
 
-# Set gin mode
-ENV GIN_MODE=release
-
 WORKDIR /
 
 # Copy the passwd file for non-root user

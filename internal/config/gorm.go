@@ -13,17 +13,17 @@ import (
 )
 
 func NewDatabase(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
-	username := viper.GetString("database.username")
-	password := viper.GetString("database.password")
-	host := viper.GetString("database.host")
-	port := viper.GetInt("database.port")
-	database := viper.GetString("database.name")
-	idleConnection := viper.GetInt("database.pool.idle")
-	maxConnection := viper.GetInt("database.pool.max")
-	maxLifeTimeConnection := viper.GetInt("database.pool.lifetime")
+	idleConnection := viper.GetInt("IDLE_CONNECTION")
+	maxConnection := viper.GetInt("MAX_CONNECTION")
+	maxLifeTimeConnection := viper.GetInt("LIFETIME_CONNECTION")
+	username := viper.GetString("DATABASE_USERNAME")
+	password := viper.GetString("DATABASE_PASSWORD")
+	host := viper.GetString("DATABASE_HOST")
+	port := viper.GetInt("DATABASE_PORT")
+	database := viper.GetString("DATABASE_NAME")
 
+	// Create the DSN string
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, database)
-
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.New(&logrusWriter{Logger: log}, logger.Config{
 			SlowThreshold:             time.Second * 5,

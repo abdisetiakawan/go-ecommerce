@@ -8,7 +8,7 @@ import (
 func NewLogger(viper *viper.Viper) *logrus.Logger {
 	log := logrus.New()
 
-	log.SetLevel(logrus.Level(viper.GetInt32("log.level")))
+	log.SetLevel(logrus.Level(viper.GetInt32("LOG_LEVEL")))
 	log.SetFormatter(&logrus.JSONFormatter{})
 
 	return log

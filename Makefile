@@ -9,6 +9,6 @@ migrate:
 	go run db/db.go
 
 .PHONY: migrate-up
-migrate:
-        @echo "Starting Migrate Up Ecommerce"
-        migrate -database "mysql://root:password@tcp(localhost:3306)/mydb" -path db/migrations/sql up
+migrate-up:
+	@echo "Starting Migrate Up Ecommerce"
+	migrate -database "mysql://root:password@tcp(localhost:3306)/mydb" -path db/migrations/sql up

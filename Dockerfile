@@ -43,8 +43,6 @@ COPY --from=build-production /etc/passwd /etc/passwd
 # Copy the app binary from the build stage
 COPY --from=build-production /app/go-ecommerce /go-ecommerce
 
-# Copy the config.json file to the root directory
-COPY --from=build-production /app/config.json /config.json
 
 # Use non-root user
 USER nonroot

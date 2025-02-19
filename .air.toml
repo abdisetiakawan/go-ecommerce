@@ -13,6 +13,8 @@
   # Command to run after build
   run_after_build = "chmod +x main && ./main"
   use_polling = true
+  poll = true
+  poll_interval = 500
 
 [log]
   level = "debug"

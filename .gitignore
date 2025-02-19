@@ -24,6 +24,8 @@ Godeps/
 
 # Environment specific files
 .env
+.env.prod
+.env.dev
 
 # IDE specific files
 .idea/

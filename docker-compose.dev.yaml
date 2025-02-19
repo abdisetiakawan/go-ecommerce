@@ -1,0 +1,97 @@
+version: "3.7"
+
+services:
+  go-ecommerce:
+    build:
+      context: .
+      target: dev
+    container_name: go-ecommerce-dev
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - go-mod-cache:/go/pkg/mod
+    ports:
+      - "3000:3000"
+      - "2345:2345"
+    env_file: .env.dev
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+      zookeeper:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    env_file: .env.dev
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "db",
+          "-u",
+          "${MYSQL_USER}",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper
+    restart: unless-stopped
+    ports:
+      - "2181:2181"
+    env_file: .env.dev
+    networks:
+      - app-network
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+
+  kafka:
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    env_file: .env.dev
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test:
+        ["CMD", "kafka-topics", "--list", "--bootstrap-server", "kafka:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+volumes:
+  db_data:
+  zookeeper_data:
+  zookeeper_log:
+  kafka_data:
+  go-mod-cache:
+
+networks:
+  app-network:
+    driver: bridge

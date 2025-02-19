@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/abdisetiakawan/go-ecommerce/internal/entity"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/repository/interfaces"
@@ -39,8 +41,8 @@ func (r *ProfileRepository) CheckIDProfileByUserID(userID uint) (bool, error) {
 
 func (r *ProfileRepository) GetProfileByUserID(userID uint) (*entity.Profile, error) {
 	var profile entity.Profile
-	if err := r.DB.Where("user_id = ?", userID).Find(&profile).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	if err := r.DB.Where("user_id = ?", userID).Take(&profile).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, model.ErrNotFound
 		}
 		return nil, err

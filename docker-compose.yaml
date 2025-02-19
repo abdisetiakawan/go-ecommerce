@@ -2,12 +2,14 @@ version: "3.7"
 
 services:
   go-ecommerce:
-    build: .
+    build:
+      context: .
+      target: build-production
     container_name: go-ecommerce
     restart: unless-stopped
     ports:
       - "3000:3000"
-    env_file: .env
+    env_file: .env.prod
     init: true
     depends_on:
       db:
@@ -25,7 +27,7 @@ services:
     restart: unless-stopped
     ports:
       - "3306:3306"
-    env_file: .env
+    env_file: .env.prod
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -52,7 +54,7 @@ services:
     restart: unless-stopped
     ports:
       - "2181:2181"
-    env_file: .env
+    env_file: .env.prod
     networks:
       - app-network
     volumes:
@@ -65,7 +67,7 @@ services:
     restart: unless-stopped
     ports:
       - "9092:9092"
-    env_file: .env
+    env_file: .env.prod
     depends_on:
       - zookeeper
     healthcheck:

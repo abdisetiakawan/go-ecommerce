@@ -7,7 +7,7 @@ go.sum
 *.dll
 *.so
 *.dylib
-
+main
 # Test binary, build output
 *.test
 *.out

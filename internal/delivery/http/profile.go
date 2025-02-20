@@ -71,7 +71,6 @@ func (c *ProfileController) GetProfile(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get profile", fiber.StatusOK, nil, nil))
 }
 
-/*************  ✨ Codeium Command ⭐  *************/
 // UpdateProfile handles PATCH /profiles endpoint for updating authenticated user's profile.
 //
 // Parameters:

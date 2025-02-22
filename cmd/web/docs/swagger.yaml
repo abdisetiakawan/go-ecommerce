@@ -90,6 +90,101 @@ components:
           description: Shipping status
 
 paths:
+  /product:
+    get:
+      summary: Get products
+      description: Retrieve a list of products for the authenticated seller's store.
+      tags:
+        - Product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Product A
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Electronics
+        - name: price_min
+          in: query
+          required: false
+          schema:
+            type: number
+            example: 10
+        - name: price_max
+          in: query
+          required: false
+          schema:
+            type: number
+            example: 100
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 10
+      responses:
+        "200":
+          description: Products successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Products retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_id:
+                          type: string
+                          example: 60d0fe4f5311236168a109d1
+                        name:
+                          type: string
+                          example: Product A
+                        description:
+                          type: string
+                          example: A high-quality product
+                        price:
+                          type: number
+                          example: 99.99
+                        category:
+                          type: string
+                          example: Electronics
+                        stock:
+                          type: integer
+                          example: 100
+                  paging:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      size:
+                        type: integer
+                        example: 10
+                      total_items:
+                        type: integer
+                        example: 100
+                      total_pages:
+                        type: integer
+                        example: 10
+
   /auth/register:
     post:
       summary: Register a new user
@@ -828,99 +923,6 @@ paths:
                         type: string
                         example: 60d0fe4f5311236168a109d1
 
-    get:
-      summary: Get products
-      description: Retrieve a list of products for the authenticated seller's store.
-      tags:
-        - Seller
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: search
-          in: query
-          required: false
-          schema:
-            type: string
-            example: Product A
-        - name: category
-          in: query
-          required: false
-          schema:
-            type: string
-            example: Electronics
-        - name: price_min
-          in: query
-          required: false
-          schema:
-            type: number
-            example: 10
-        - name: price_max
-          in: query
-          required: false
-          schema:
-            type: number
-            example: 100
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            example: 1
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            example: 10
-      responses:
-        "200":
-          description: Products successfully retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Products retrieved successfully
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        product_id:
-                          type: string
-                          example: 60d0fe4f5311236168a109d1
-                        name:
-                          type: string
-                          example: Product A
-                        description:
-                          type: string
-                          example: A high-quality product
-                        price:
-                          type: number
-                          example: 99.99
-                        category:
-                          type: string
-                          example: Electronics
-                        stock:
-                          type: integer
-                          example: 100
-                  paging:
-                    type: object
-                    properties:
-                      page:
-                        type: integer
-                        example: 1
-                      size:
-                        type: integer
-                        example: 10
-                      total_items:
-                        type: integer
-                        example: 100
-                      total_pages:
-                        type: integer
-                        example: 10
 
   /seller/products/{product_uuid}:
     get:

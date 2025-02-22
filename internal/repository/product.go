@@ -22,11 +22,14 @@ func (r *ProductRepository) CreateProduct(product *entity.Product) error {
 func (r *ProductRepository) GetProducts(request *model.GetProductsRequest) ([]entity.Product, int64, error) {
 	var products []entity.Product
 	var total int64
+	query := r.DB.Model(&entity.Product{})
 
-	query := r.DB.Model(&entity.Product{}).
-		Preload("Store", func(db *gorm.DB) *gorm.DB {
-			return r.DB.Where("user_id = ?", request.UserID)
-		})
+	if request.Role == "seller" {
+		query = query.
+            Joins("JOIN stores ON stores.id = products.store_id").
+            Where("stores.user_id = ?", request.UserID) 
+	}
+	query = query.Preload("Store")
 
 	if request.Search != "" {
 		searchTerm := "%" + request.Search + "%"

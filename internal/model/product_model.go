@@ -22,6 +22,7 @@ type ProductResponse struct {
 }
 
 type GetProductsRequest struct {
+	Role     string  `json:"-"`
 	UserID   uint    `json:"-"`
 	Search   string  `json:"-"`
 	Category string  `json:"-" validate:"omitempty,oneof=clothes electronics accessories"`

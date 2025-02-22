@@ -44,6 +44,10 @@ func (rc *RouteConfig) setupUserRoutes() {
 		userGroup.Put("/profile", rc.ProfileController.UpdateProfile)
 		userGroup.Patch("/password", rc.UserController.ChangePassword)
 	}
+	productGroup := rc.App.Group("/api/product", rc.AuthMiddleware, userRateLimiter)
+	{
+		productGroup.Get("", rc.ProductController.GetProducts)
+	}
 }
 
 func (rc *RouteConfig) setupBuyerRoutes() {
@@ -78,7 +82,6 @@ func (rc *RouteConfig) setupSellerRoutes() {
 		productGroup := sellerGroup.Group("/products")
 		{
 			productGroup.Post("", rc.ProductController.RegisterProduct)
-			productGroup.Get("", rc.ProductController.GetProducts)
 			productGroup.Get("/:product_uuid", rc.ProductController.GetProductById)
 			productGroup.Put("/:product_uuid", rc.ProductController.UpdateProduct)
 			productGroup.Delete("/:product_uuid", rc.ProductController.DeleteProduct)

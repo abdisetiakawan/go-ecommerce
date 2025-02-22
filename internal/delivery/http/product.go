@@ -34,6 +34,7 @@ func NewProductController(usecase interfaces.ProductUseCase) *ProductController 
 func (c *ProductController) GetProducts(ctx *fiber.Ctx) error {
 	authID := middleware.GetUser(ctx)
 	request := &model.GetProductsRequest{
+		Role: authID.Role,
 		UserID: authID.ID,
 		Search: ctx.Query("search", ""),
 		Category: ctx.Query("category", ""),

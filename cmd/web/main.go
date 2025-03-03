@@ -7,6 +7,7 @@ import (
 	"github.com/abdisetiakawan/go-ecommerce/internal/config"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/swagger"
 )
 
@@ -33,6 +34,11 @@ func main() {
         panic(err)
     }
     app := config.NewFiber(viperConfig)
+    app.Use(cors.New(cors.Config{
+        AllowOrigins: "*",
+        AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
+        AllowHeaders: "*",
+    }))
     app.Get("/swagger.yaml", func(c *fiber.Ctx) error {
         c.Set("Content-Type", "text/yaml")
         return c.Send(swaggerYAML)

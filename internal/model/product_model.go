@@ -12,6 +12,7 @@ type RegisterProduct struct {
 type ProductResponse struct {
 	ProductUUID string  `json:"product_uuid"`
 	StoreID     uint    `json:"store_id,omitempty"`
+	Store       string  `json:"store_name,omitempty"`
 	ProductName string  `json:"product_name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`

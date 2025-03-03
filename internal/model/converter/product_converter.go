@@ -8,7 +8,6 @@ import (
 func ProductToResponse(product *entity.Product) *model.ProductResponse {
 	return &model.ProductResponse{
 		ProductUUID: product.ProductUUID,
-		StoreID:     product.StoreID,
 		ProductName: product.ProductName,
 		Description: product.Description,
 		Price:       product.Price,
@@ -27,5 +26,6 @@ func ProductsToResponse(product *entity.Product) *model.ProductResponse {
 		Price:       product.Price,
 		Stock:       product.Stock,
 		Category:    product.Category,
+		Store:       product.Store.StoreName,
 	}
 }

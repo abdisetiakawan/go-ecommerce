@@ -30,5 +30,6 @@ func ProductsToResponse(product *entity.Product) *model.ProductResponse {
 		Price:       product.Price,
 		Stock:       product.Stock,
 		Category:    product.Category,
+		Store:       product.Store.StoreName,
 	}
 }

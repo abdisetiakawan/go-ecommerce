@@ -41,7 +41,7 @@ func (r *ProfileRepository) CheckIDProfileByUserID(userID uint) (bool, error) {
 
 func (r *ProfileRepository) GetProfileByUserID(userID uint) (*entity.Profile, error) {
 	var profile entity.Profile
-	if err := r.DB.Where("user_id = ?", userID).Take(&profile).Error; err != nil {
+	if err := r.DB.Preload("User").Where("user_id = ?", userID).Take(&profile).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, model.ErrNotFound
 		}

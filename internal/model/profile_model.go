@@ -11,6 +11,8 @@ type CreateProfile struct {
 
 type ProfileResponse struct {
 	UserID      uint   `json:"user_id"`
+	Username    string `json:"username,omitempty"`
+	Name        string `json:"name,omitempty"`
 	Gender      string `json:"gender"`
 	PhoneNumber string `json:"phone_number"`
 	Address     string `json:"address"`

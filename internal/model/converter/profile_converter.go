@@ -8,6 +8,8 @@ import (
 func ProfileToResponse(profile *entity.Profile) *model.ProfileResponse {
 	return &model.ProfileResponse{
 		UserID:      profile.UserID,
+		Username:    profile.User.Username,
+		Name:        profile.User.Name,
 		Gender:      profile.Gender,
 		PhoneNumber: profile.PhoneNumber,
 		Address:     profile.Address,

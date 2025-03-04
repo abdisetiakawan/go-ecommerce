@@ -136,8 +136,12 @@ func (uc *UserUseCase) Login(ctx context.Context, request *model.LoginUser) (*mo
         return nil, model.ErrInvalidCredentials
     }
 
+	if user.Role != request.Role {
+		return nil, model.ErrInvalidRole
+	}	
+
 	// validate password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
 		return nil, model.ErrInvalidCredentials
 	}
 

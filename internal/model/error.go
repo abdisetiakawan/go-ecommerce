@@ -35,6 +35,7 @@ var (
     ErrForbidden          = NewApiError(fiber.StatusForbidden, "You are not allowed to access this resource", nil)
     ErrPasswordNotMatch   = NewApiError(fiber.StatusBadRequest, "Password and confirm password do not match", nil)
     ErrStoreNotFound      = NewApiError(fiber.StatusNotFound, "Store not found", nil)
+    ErrInvalidRole        = NewApiError(fiber.StatusBadRequest, "Invalid role", nil)
 )
 
 func ErrValidationFailed(errors interface{}) *ApiError {

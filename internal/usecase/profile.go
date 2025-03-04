@@ -117,6 +117,14 @@ func (u *ProfileUseCase) UpdateProfile(ctx context.Context, request *model.Updat
 		return nil, err
 	}
 
+	if request.Name != "" {
+		err := u.db.Model(&entity.User{}).Where("id = ?", request.UserID).Update("name", request.Name)
+		if err.Error != nil {
+			return nil, err.Error
+		}
+		existingProfile.Name = request.Name
+	}
+
 	if request.Gender != "" {
 		existingProfile.Gender = request.Gender
 	}
@@ -132,10 +140,9 @@ func (u *ProfileUseCase) UpdateProfile(ctx context.Context, request *model.Updat
 	if request.Bio != "" {
 		existingProfile.Bio = request.Bio
 	}
-
 	if err := u.profileRepo.UpdateProfile(existingProfile); err != nil {
 		return nil, err
 	}
 
-	return converter.ProfileToResponse(existingProfile), nil
+	return converter.ProfileUpdatedToResponse(existingProfile), nil
 }

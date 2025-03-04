@@ -24,6 +24,7 @@ type ProfileResponse struct {
 
 type UpdateProfile struct {
 	UserID      uint   `json:"-"`
+	Name        string `json:"name" validate:"omitempty,min=3,max=100"`
 	Gender      string `json:"gender" validate:"omitempty,oneof=male female"`
 	PhoneNumber string `json:"phone_number" validate:"omitempty,e164"`
 	Address     string `json:"address" validate:"omitempty"`

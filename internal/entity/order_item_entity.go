@@ -11,4 +11,5 @@ type  OrderItem struct {
 	Product       Product `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Quantity      int    `gorm:"not null"`
 	TotalPrice    float64 `gorm:"not null"`
+	ProductName   string  `gorm:"-" json:"product_name"`
 }

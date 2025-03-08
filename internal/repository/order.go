@@ -90,6 +90,7 @@ func (r *OrderRepository) GetOrderByIdByBuyer(request *model.GetOrderDetails) (*
 	if err := r.DB.Preload("Items", func (db *gorm.DB) *gorm.DB {
 		return db.Order("order_items.created_at ASC")
 	}).
+    Preload("Items.Product").
 	Preload("Payment").
 	Preload("Shipping").
 	Where(&entity.Order{
@@ -102,6 +103,11 @@ func (r *OrderRepository) GetOrderByIdByBuyer(request *model.GetOrderDetails) (*
 		}
 		return nil, err
 	}
+
+    for i := range order.Items {
+        order.Items[i].ProductName = order.Items[i].Product.ProductName
+    }
+    
 	return &order, nil
 }
 

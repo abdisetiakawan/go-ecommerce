@@ -12,6 +12,7 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
     for i, item := range order.Items {
         items[i] = model.OrderItemResponse{
             OrderItemUuid: item.OrderItemUUID,
+            ProductName:   item.Product.ProductName,
             Quantity:  item.Quantity,
         }
     }

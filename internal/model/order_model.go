@@ -35,6 +35,7 @@ type OrderResponse struct {
 
 type OrderItemResponse struct {
 	OrderItemUuid string `json:"order_item_uuid"`
+	ProductName   string `json:"product_name"`
 	Quantity      int    `json:"quantity"`
 }
 

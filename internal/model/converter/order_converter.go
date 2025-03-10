@@ -44,6 +44,7 @@ func OrdersToResponse(orders *entity.Order) *model.ListOrderResponse {
         OrderUUID: orders.OrderUUID,
         TotalPrice: orders.TotalPrice,
         Status: orders.Status,
+        Date: orders.CreatedAt.Format("2006-01-02 15:04"),
     }
 }
 

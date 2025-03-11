@@ -1,6 +1,8 @@
 package http
 
 import (
+	"math"
+
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/abdisetiakawan/go-ecommerce/internal/usecase/interfaces"
@@ -77,7 +79,7 @@ func (c *OrderController) GetOrdersByBuyer(ctx *fiber.Ctx) error {
 		Page:      request.Page,
 		Size:      request.Limit,
 		TotalItem: total,
-		TotalPage: int64(total) / int64(request.Limit),
+		TotalPage: int64(math.Ceil(float64(total) / float64(request.Limit))),
 	}
 	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully get orders", fiber.StatusOK, paging, nil))
 }

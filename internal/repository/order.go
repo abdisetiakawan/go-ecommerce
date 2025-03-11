@@ -130,7 +130,11 @@ func (r *OrderRepository) GetOrdersBySeller(request *model.SearchOrderRequestByS
         query = query.Where("status = ?", request.Status)
     }
 
-    if err := query.Count(&total).Find(&orders).Error; err != nil {
+    if err := query.Count(&total).Error; err != nil {
+        return nil, 0, err
+    }
+    
+    if err := query.Offset((request.Page - 1) * request.Limit).Limit(request.Limit).Find(&orders).Error; err != nil {
         return nil, 0, err
     }
 

@@ -56,7 +56,7 @@ type PaymentResponse struct {
 
 type SearchOrderRequest struct {
 	UserID uint   `json:"-"`
-	Status string `json:"-" validate:"omitempty,oneof=pending processing delivered cancelled"`
+	Status string `json:"-" validate:"omitempty,oneof=pending processed delivered cancelled"`
 	Page   int    `json:"-"`
 	Limit  int    `json:"-"`
 }
@@ -74,7 +74,7 @@ type GetOrderDetails struct {
 }
 
 type SearchOrderRequestBySeller struct {
-	Status  string `json:"-" validate:"omitempty,oneof=pending processing delivered cancelled"`
+	Status  string `json:"-" validate:"omitempty,oneof=pending processed delivered cancelled"`
 	UserID  uint   `json:"-"`
 	StoreID uint   `json:"-"`
 	Page    int    `json:"-"`

@@ -60,16 +60,23 @@ func (r *ProductRepository) GetProducts(request *model.GetProductsRequest) ([]en
 }
 
 func (r *ProductRepository) GetProductById(userID uint, productUUID string) (*entity.Product, error) {
-	var product entity.Product
-	if err := r.DB.Model(&entity.Product{}).Preload("Store", func(db *gorm.DB) *gorm.DB {
-		return r.DB.Where("user_id = ?", userID)
-	}).Take(&product, "product_uuid = ?", productUUID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, model.ErrNotFound
-		}
-		return nil, err
-	}
-	return &product, nil
+    var storeID uint
+    if err := r.DB.Model(&entity.Store{}).Select("id").Where("user_id = ?", userID).Scan(&storeID).Error; err != nil {
+        if err == gorm.ErrRecordNotFound {
+            return nil, model.ErrNotFound
+        }
+        return nil, err
+    }
+
+    var product entity.Product
+    if err := r.DB.Model(&entity.Product{}).Preload("Store").Where("product_uuid = ? AND store_id = ?", productUUID, storeID).Take(&product).Error; err != nil {
+        if err == gorm.ErrRecordNotFound {
+            return nil, model.ErrNotFound
+        }
+        return nil, err
+    }
+
+    return &product, nil
 }
 
 func (r *ProductRepository) UpdateProduct(product *entity.Product) error {

@@ -124,7 +124,7 @@ func (u *ProductUseCase) UpdateProduct(ctx context.Context, request *model.Updat
 	if err := helper.ValidateStruct(u.val, request); err != nil {
 		return nil, err
 	}
-	product, err := u.productRepo.GetProductById(request.UserID, request.ProductName)
+	product, err := u.productRepo.GetProductById(request.UserID, request.ProductUUID)
 	if err != nil {
 		return nil, err
 	}

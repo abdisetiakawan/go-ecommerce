@@ -55,10 +55,12 @@ func OrderToResponseForSeller(order *entity.Order) *model.OrdersResponseForSelle
         items[i] = model.OrderItemResponse{
             OrderItemUuid: item.OrderItemUUID,
             Quantity:  item.Quantity,
+            ProductName: item.Product.ProductName,
         }
     }
 
     return &model.OrdersResponseForSeller{
+        UserName:       order.User.Username,
         OrderUUID:  order.OrderUUID,
         TotalPrice: order.TotalPrice,
         Status:     order.Status,

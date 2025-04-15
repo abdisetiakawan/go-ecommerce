@@ -82,6 +82,7 @@ type SearchOrderRequestBySeller struct {
 }
 
 type OrdersResponseForSeller struct {
+	UserName   string              `json:"user_name"`
 	OrderUUID  string              `json:"order_uuid"`
 	TotalPrice float64             `json:"total_price"`
 	Status     string              `json:"status"`

@@ -124,6 +124,7 @@ func (r *OrderRepository) GetOrdersBySeller(request *model.SearchOrderRequestByS
         Preload("Items.Product").
         Preload("Payment").
         Preload("Shipping").
+        Preload("User").
         Where("id IN (?)", subquery)
 
     if request.Status != "" {

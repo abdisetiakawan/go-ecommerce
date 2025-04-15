@@ -150,6 +150,7 @@ func (r *OrderRepository) GetOrderBySeller(order_uuid string, store_id uint) (*e
     }).
         Preload("Payment").
         Preload("Shipping").
+        Preload("User").
         Where("order_uuid = ?", order_uuid).
         Joins("JOIN order_items ON order_items.order_id = orders.id").
         Joins("JOIN products ON products.id = order_items.product_id").

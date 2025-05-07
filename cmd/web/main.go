@@ -35,9 +35,10 @@ func main() {
     }
     app := config.NewFiber(viperConfig)
     app.Use(cors.New(cors.Config{
-        AllowOrigins: "*",
+        AllowOrigins: "http://localhost:5173",
+        AllowCredentials: true,
         AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
-        AllowHeaders: "*",
+        AllowHeaders: "Origin, Content-Type, Accept",
     }))
     app.Get("/swagger.yaml", func(c *fiber.Ctx) error {
         c.Set("Content-Type", "text/yaml")

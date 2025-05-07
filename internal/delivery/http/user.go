@@ -1,6 +1,8 @@
 package http
 
 import (
+	"time"
+
 	"github.com/abdisetiakawan/go-ecommerce/internal/delivery/http/middleware"
 	"github.com/abdisetiakawan/go-ecommerce/internal/helper"
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
@@ -37,11 +39,23 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return err
 	}
 	helper.TrimSpaces(request, request.ConfirmPassword, request.Password)
-	response, err := c.uc.Register(ctx.UserContext(), request)
+	authRes, err := c.uc.Register(ctx.UserContext(), request)
 	if err != nil {
 		return err
 	}
-	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(response, "Successfully registered user", fiber.StatusCreated, nil, nil))
+	ctx.Cookie(&fiber.Cookie{
+        Name:     "jwt",
+        Value:    authRes.AccessToken,
+        HTTPOnly: true,
+        Secure:   true,
+        SameSite: "Strict",
+        MaxAge:   3600,
+        Path:     "/",
+    })
+	return ctx.Status(fiber.StatusCreated).JSON(model.NewWebResponse(
+        fiber.Map{"id": authRes.ID, "name": authRes.Name, "role": authRes.Role},
+        "User registered successfully", fiber.StatusCreated, nil, nil,
+    ))
 }
 
 // Login handles POST /users/login endpoint.
@@ -62,11 +76,23 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(request); err != nil {
 		return err
 	}
-	response, err := c.uc.Login(ctx.UserContext(), request)
+	authRes, err := c.uc.Login(ctx.UserContext(), request)
 	if err != nil {
 		return err
 	}
-	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(response, "Successfully logged in user", fiber.StatusOK, nil, nil))
+	ctx.Cookie(&fiber.Cookie{
+        Name:     "jwt",
+        Value:    authRes.AccessToken,
+        HTTPOnly: true,
+        Secure:   true,
+        SameSite: "Strict",
+        MaxAge:   3600,
+        Path:     "/",
+    })
+	return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(
+        fiber.Map{"id": authRes.ID, "name": authRes.Name, "role": authRes.Role},
+        "User logged in successfully", fiber.StatusOK, nil, nil,
+    ))
 }
 
 // ChangePassword handles PATCH /users/change_password endpoint.
@@ -96,4 +122,30 @@ func (c *UserController) ChangePassword(ctx *fiber.Ctx) error {
     }
 
     return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(true, "Successfully change password", fiber.StatusOK, nil, nil))
+}
+
+// Logout handles POST /users/logout endpoint.
+//
+// Parameters:
+//
+//   * ctx: fiber.Ctx - Context for the request.
+//
+// Returns:
+//
+//   * 200 OK: model.WebResponse(true) if logout is successful.
+//
+// Errors:
+//
+//   * N/A
+func (c *UserController) Logout(ctx *fiber.Ctx) error {
+    ctx.Cookie(&fiber.Cookie{
+        Name:     "jwt",
+        Value:    "",
+        HTTPOnly: true,
+        Secure:   true,
+        SameSite: "Strict",
+        Expires:  time.Now().Add(-time.Hour),
+        Path:     "/",
+    })
+    return ctx.Status(fiber.StatusOK).JSON(model.NewWebResponse(true, "Logged out successfully", fiber.StatusOK, nil, nil))
 }

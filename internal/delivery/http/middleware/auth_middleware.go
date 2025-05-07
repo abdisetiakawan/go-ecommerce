@@ -1,49 +1,39 @@
 package middleware
 
 import (
-	"strings"
-
 	"github.com/abdisetiakawan/go-ecommerce/internal/model"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"github.com/spf13/viper"
 )
 
-func NewAuth(viper *viper.Viper) fiber.Handler {
-    return func(ctx *fiber.Ctx) error {
-        authHeader := ctx.Get("Authorization")
-        if authHeader == "" {
+func NewAuth(v *viper.Viper) fiber.Handler {
+    return func(c *fiber.Ctx) error {
+        tokenStr := c.Cookies("jwt")
+        if tokenStr == "" {
             return fiber.ErrUnauthorized
         }
-        secretkey := viper.GetString("credentials.accesssecret")
-        tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-        token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-            return []byte(secretkey), nil
+        secret := v.GetString("credentials.accesssecret")
+        token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+            return []byte(secret), nil
         })
         if err != nil || !token.Valid {
             return fiber.ErrUnauthorized
         }
-
         claims, ok := token.Claims.(jwt.MapClaims)
-        if !ok || !token.Valid {
+        if !ok {
             return fiber.ErrUnauthorized
         }
-
-        id := uint(claims["id"].(float64))
-        email := claims["email"].(string)
-		role := claims["role"].(string)
-
-
         auth := &model.Auth{
-			ID:    id,
-            Email: email,
-			Role:  role,
+            ID:    uint(claims["id"].(float64)),
+            Email: claims["email"].(string),
+            Role:  claims["role"].(string),
         }
-        ctx.Locals("auth", auth)
-        return ctx.Next()
+        c.Locals("auth", auth)
+        return c.Next()
     }
 }
 
-func GetUser(ctx *fiber.Ctx) *model.Auth {
-    return ctx.Locals("auth").(*model.Auth)
+func GetUser(c *fiber.Ctx) *model.Auth {
+    return c.Locals("auth").(*model.Auth)
 }

@@ -32,6 +32,7 @@ func (rc *RouteConfig) setupAuthRoutes() {
 	{
 		authGroup.Post("/register", rc.UserController.Register)
 		authGroup.Post("/login", rc.UserController.Login)
+		authGroup.Post("/logout", rc.UserController.Logout)
 	}
 }
 

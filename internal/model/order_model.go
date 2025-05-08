@@ -24,7 +24,7 @@ type PaymentRequest struct {
 }
 
 type OrderResponse struct {
-	UserName   string              `json:"user_name"`
+	Username   string              `json:"user_name,omitempty"`
 	OrderUUID  string              `json:"order_uuid"`
 	TotalPrice float64             `json:"total_price"`
 	Status     string              `json:"status"`

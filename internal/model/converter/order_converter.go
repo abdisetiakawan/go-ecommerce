@@ -18,7 +18,7 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
     }
 
     return &model.OrderResponse{
-        UserName:   order.User.Username,
+        Username:   order.User.Username,
         OrderUUID:  order.OrderUUID,
         TotalPrice: order.TotalPrice,
         Status:     order.Status,
@@ -84,6 +84,7 @@ func CreateOrderToResponse(payment *eventmodel.PaymentMessage, shipping *eventmo
         }
     }
     return &model.OrderResponse{
+        Username:   order.User.Username,
         OrderUUID:  order.OrderUUID,
         TotalPrice: order.TotalPrice,
         Status:     order.Status,

@@ -89,10 +89,6 @@ func main() {
         shutdownErrors := make(chan error, 5)
         
         // Shutdown components concurrently
-        go func() {
-            shutdownErrors <- app.Shutdown()
-        }()
-        
         go func() { shutdownErrors <- app.Shutdown() }()
         go func() { shutdownErrors <- kafkaProducer.Close() }()
         go func() { shutdownErrors <- paymentConsumer.Close() }()
@@ -102,7 +98,7 @@ func main() {
 
         // Collect shutdown errors
         var shutdownError error
-        for i := 0; i < 3; i++ {
+        for i := 0; i < 5; i++ {
             if err := <-shutdownErrors; err != nil {
                 logger.Error(err)
                 shutdownError = err

@@ -13,5 +13,4 @@ type OrderRepository interface {
 	GetOrderByIdByBuyer(request *model.GetOrderDetails) (*entity.Order, error)
 	GetOrdersBySeller(request *model.SearchOrderRequestBySeller) ([]entity.Order, int64, error)
 	GetOrderBySeller(orderUUID string, storeID uint) (*entity.Order, error)
-	ChangeOrderStatus() error
 }

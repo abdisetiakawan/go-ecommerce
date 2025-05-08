@@ -13,13 +13,24 @@ type KafkaProducer struct {
     producer sarama.SyncProducer
 }
 
-func NewKafkaProducer(viper *viper.Viper) (*KafkaProducer, error) {
-    kafkaConfig := kafka.NewKafkaConfig(viper)
-    producer, err := kafka.NewKafkaProducer(kafkaConfig)
+func NewKafkaProducer(v *viper.Viper) (*KafkaProducer, error) {
+    config := kafka.NewKafkaConfig(v)
+    
+    saramaConfig, err := kafka.NewSaramaConfig(config)
     if err != nil {
         return nil, err
     }
-
+    
+    // Producer specific configs
+    saramaConfig.Producer.RequiredAcks = sarama.WaitForAll
+    saramaConfig.Producer.Return.Successes = true
+    saramaConfig.Producer.Return.Errors = true
+    
+    producer, err := sarama.NewSyncProducer(config.Brokers, saramaConfig)
+    if err != nil {
+        return nil, err
+    }
+    
     return &KafkaProducer{producer: producer}, nil
 }
 
@@ -34,4 +45,11 @@ func (k *KafkaProducer) SendMessage(ctx context.Context, message interface{}, to
         Value: sarama.ByteEncoder(jsonMessage),
     })
     return err
+}
+
+func (k *KafkaProducer) Close() error {
+    if k.producer != nil {
+        return k.producer.Close()
+    }
+    return nil
 }

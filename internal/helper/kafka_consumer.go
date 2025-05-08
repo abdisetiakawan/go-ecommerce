@@ -2,6 +2,7 @@ package helper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/IBM/sarama"
 	"github.com/abdisetiakawan/go-ecommerce/internal/kafka"
@@ -9,24 +10,59 @@ import (
 )
 
 type KafkaConsumer struct {
-	consumer sarama.Consumer
+	consumer    sarama.ConsumerGroup
+	ready       chan bool
+	consumerID  string
+	config      *kafka.KafkaConnectionConfig
 }
 
-func NewKafkaConsumer(viper *viper.Viper) (*KafkaConsumer, error) {
-	kafkaConfig := kafka.NewKafkaConfig(viper)
-	consumer, err := sarama.NewConsumer(kafkaConfig.Brokers, nil)
+func NewKafkaConsumer(v *viper.Viper, consumerID string) (*KafkaConsumer, error) {
+	config := kafka.NewKafkaConnectionConfig(v)
+	
+	kafkaConfig := &kafka.KafkaConfig{
+		Brokers:       config.Brokers,
+		ConsumerGroup: config.ConsumerGroup,
+	}
+	saramaConfig, err := kafka.NewSaramaConfig(kafkaConfig)
 	if err != nil {
 		return nil, err
 	}
-
-	return &KafkaConsumer{consumer: consumer}, nil
-}
-
-func (k *KafkaConsumer) Consume(ctx context.Context, topic string) (sarama.PartitionConsumer, error) {
-	partitionConsumer, err := k.consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
+	
+	// Consumer specific configs
+	saramaConfig.Consumer.Group.Rebalance.Strategy = sarama.NewBalanceStrategyRoundRobin()
+	saramaConfig.Consumer.Offsets.Initial = sarama.OffsetNewest
+	
+	// Use unique consumer group ID for each consumer
+	groupID := fmt.Sprintf("%s-%s", config.ConsumerGroup, consumerID)
+	group, err := sarama.NewConsumerGroup(config.Brokers, groupID, saramaConfig)
 	if err != nil {
 		return nil, err
 	}
+	
+	return &KafkaConsumer{
+		consumer:   group,
+		ready:      make(chan bool),
+		consumerID: consumerID,
+		config:     config,
+	}, nil
+}
 
-	return partitionConsumer, nil
+func (k *KafkaConsumer) Consume(ctx context.Context, topics []string, handler sarama.ConsumerGroupHandler) error {
+	for {
+		err := k.consumer.Consume(ctx, topics, handler)
+		if err != nil {
+			return err
+		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		k.ready = make(chan bool)
+	}
+}
+
+func (k *KafkaConsumer) Close() error {
+    if k.consumer != nil {
+        return k.consumer.Close()
+    }
+    return nil
 }

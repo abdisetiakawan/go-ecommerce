@@ -28,7 +28,9 @@ type BootstrapConfig struct {
 	Jwt      *helper.JwtHelper
 	UserUUID *helper.UUIDHelper
 	KafkaProducer *helper.KafkaProducer
-	KafkaConsumer *helper.KafkaConsumer
+	PaymentConsumer *helper.KafkaConsumer
+	ShippingConsumer *helper.KafkaConsumer
+	OrderConsumer *helper.KafkaConsumer
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -36,13 +38,16 @@ func Bootstrap(config *BootstrapConfig) {
 	orderEventRepo := eventrepository.NewOrderEventRepository(config.DB)
 	orderEventUC := eventuc.NewOrderEventEvent(config.DB, orderEventRepo, config.KafkaProducer)
 
+	orderConsumerRepo := repository.NewOrderConsumerHandler(config.DB, config.OrderConsumer)
+	paymentConsumerRepo := repository.NewPaymentConsumerHandler(config.DB, config.PaymentConsumer)
+	shippingConsumerRepo := repository.NewShippingConsumerHandler(config.DB, config.ShippingConsumer)
+
 	userRepository := repository.NewUserRepository(config.DB)
 	profileRepository := repository.NewProfileRepository(config.DB)
-	orderRepository := repository.NewOrderRepository(config.DB, config.KafkaConsumer)
+	orderRepository := repository.NewOrderRepository(config.DB)
 	productRepository := repository.NewProductRepository(config.DB)
 	storeRepository := repository.NewStoreRepository(config.DB)
-	shippingRepository := repository.NewShippingRepository(config.DB, config.KafkaConsumer)
-	paymentRepository := repository.NewPaymentRepository(config.DB, config.KafkaConsumer)
+	shippingRepository := repository.NewShippingRepository(config.DB)
 
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Validate, userRepository, config.UserUUID, config.Jwt)
 	profileUseCase := usecase.NewProfileUseCase(config.DB, config.Validate, profileRepository)
@@ -59,32 +64,38 @@ func Bootstrap(config *BootstrapConfig) {
 	shippingController := http.NewShippingController(shippingUseCase)
 
 	go func() {
-		if err := paymentRepository.CreatePayment(); err != nil {
+		ctx := context.Background()
+		if err := paymentConsumerRepo.CreatePayment(ctx); err != nil {
 			log.Error(err)
 		}
 	}()
 	go func() {
-		if err := shippingRepository.CreateShipping(); err != nil {
+		ctx := context.Background()
+		if err := shippingConsumerRepo.CreateShipping(ctx); err != nil {
 			log.Error(err)
 		}
 	}()
 	go func() {
-		if err := paymentRepository.CancelPayment(); err != nil {
+		ctx := context.Background()
+		if err := paymentConsumerRepo.CancelPayment(ctx); err != nil {
 			log.Error(err)
 		}
 	}()
 	go func() {
-		if err := shippingRepository.CancelShipping(); err != nil {
+		ctx := context.Background()
+		if err := shippingConsumerRepo.CancelShipping(ctx); err != nil {
 			log.Error(err)
 		}
 	}()
 	go func() {
-		if err := paymentRepository.CheckoutPayment(); err != nil {
+		ctx := context.Background()
+		if err := paymentConsumerRepo.CheckoutPayment(ctx); err != nil {
 			log.Error(err)
 		}
 	}()
 	go func() {
-		if err := orderRepository.ChangeOrderStatus(); err != nil {
+		ctx := context.Background()
+		if err := orderConsumerRepo.ChangeOrderStatus(ctx); err != nil {
 			log.Error(err)
 		}
 	}()

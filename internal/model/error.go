@@ -39,5 +39,9 @@ var (
 )
 
 func ErrValidationFailed(errors interface{}) *ApiError {
-    return NewApiError(fiber.StatusBadRequest, "Validation failed", errors)
+    return &ApiError{
+        StatusCode:    fiber.StatusBadRequest,
+        Message: "Validation failed",
+        Errors:  errors,
+    }
 }

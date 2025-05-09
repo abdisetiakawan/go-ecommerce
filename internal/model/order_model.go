@@ -16,7 +16,7 @@ type ShippingAddressRequest struct {
 	Address    string `json:"address" validate:"required"`
 	City       string `json:"city" validate:"required"`
 	Province   string `json:"province" validate:"required"`
-	PostalCode string `json:"postal_code" validate:"required,min=5,max=5"`
+	PostalCode string `json:"postal_code" validate:"required,len=5,numeric"`
 }
 
 type PaymentRequest struct {

@@ -24,7 +24,6 @@ type PaymentRequest struct {
 }
 
 type OrderResponse struct {
-	Username   string              `json:"user_name,omitempty"`
 	OrderUUID  string              `json:"order_uuid"`
 	TotalPrice float64             `json:"total_price"`
 	Status     string              `json:"status"`
@@ -36,8 +35,8 @@ type OrderResponse struct {
 
 type OrderItemResponse struct {
 	OrderItemUuid string  `json:"order_item_uuid"`
-	ProductName   string  `json:"product_name"`
-	Price         float64 `json:"price"`
+	ProductName   string  `json:"product_name,omitempty"`
+	Price         float64 `json:"price,omitempty"`
 	Quantity      int     `json:"quantity"`
 }
 

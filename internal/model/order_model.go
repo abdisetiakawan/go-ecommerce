@@ -75,7 +75,7 @@ type GetOrderDetails struct {
 }
 
 type SearchOrderRequestBySeller struct {
-	Status   string `json:"-" validate:"omitempty,oneof=pending processed delivered cancelled"`
+	Status   string `json:"-" validate:"omitempty,oneof=pending processed completed cancelled"`
 	SortDate string `json:"-" validate:"omitempty,oneof=asc desc"`
 	UserID   uint   `json:"-"`
 	StoreID  uint   `json:"-"`

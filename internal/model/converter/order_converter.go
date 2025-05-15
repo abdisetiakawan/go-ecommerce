@@ -13,6 +13,7 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
         items[i] = model.OrderItemResponse{
             OrderItemUuid: item.OrderItemUUID,
             ProductName:   item.Product.ProductName,
+            Price:         item.Product.Price,
             Quantity:  item.Quantity,
         }
     }
@@ -56,6 +57,7 @@ func OrderToResponseForSeller(order *entity.Order) *model.OrdersResponseForSelle
         items[i] = model.OrderItemResponse{
             OrderItemUuid: item.OrderItemUUID,
             Quantity:  item.Quantity,
+            Price:     item.Product.Price,
             ProductName: item.Product.ProductName,
         }
     }

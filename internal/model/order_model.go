@@ -75,11 +75,12 @@ type GetOrderDetails struct {
 }
 
 type SearchOrderRequestBySeller struct {
-	Status  string `json:"-" validate:"omitempty,oneof=pending processed delivered cancelled"`
-	UserID  uint   `json:"-"`
-	StoreID uint   `json:"-"`
-	Page    int    `json:"-"`
-	Limit   int    `json:"-"`
+	Status   string `json:"-" validate:"omitempty,oneof=pending processed delivered cancelled"`
+	SortDate string `json:"-" validate:"omitempty,oneof=asc desc"`
+	UserID   uint   `json:"-"`
+	StoreID  uint   `json:"-"`
+	Page     int    `json:"-"`
+	Limit    int    `json:"-"`
 }
 
 type OrdersResponseForSeller struct {

@@ -205,10 +205,11 @@ func (c *OrderController) GetOrderByIdSeller(ctx *fiber.Ctx) error {
 func (c *OrderController) GetOrdersBySeller(ctx *fiber.Ctx) error {
 	authID := middleware.GetUser(ctx)
 	request := &model.SearchOrderRequestBySeller{
-		UserID: authID.ID,
-		Status: ctx.Query("status", ""),
-		Page:   ctx.QueryInt("page", 1),
-		Limit:  ctx.QueryInt("limit", 10),
+		UserID:   authID.ID,
+		Status:   ctx.Query("status", ""),
+		SortDate: ctx.Query("sort_date", ""),
+		Page:     ctx.QueryInt("page", 1),
+		Limit:    ctx.QueryInt("limit", 10),
 	}
 	response, total, err := c.uc.GetOrdersBySeller(ctx.UserContext(), request)
 	if err != nil {

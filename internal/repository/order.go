@@ -126,6 +126,16 @@ func (r *OrderRepository) GetOrdersBySeller(request *model.SearchOrderRequestByS
         query = query.Where("status = ?", request.Status)
     }
 
+    if request.SortDate != "" {
+        if request.SortDate == "asc" {
+            query = query.Order("created_at ASC")
+        } else {
+            query = query.Order("created_at DESC")
+        }
+    } else {
+        query = query.Order("created_at DESC")
+    }
+
     if err := query.Count(&total).Error; err != nil {
         return nil, 0, err
     }

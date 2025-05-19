@@ -33,9 +33,6 @@ func GetValidationMessage(field string, tag string, param string) string {
 		if field == "Gender" {
 			return "Gender must be either 'male' or 'female'"
 		}
-		if field == "Category" {
-			return "Category must be either 'men' or 'women'"
-		}
 		return fmt.Sprintf("%s has invalid value", field)
 	case "e164":
 		return "Phone number must be in E.164 format"

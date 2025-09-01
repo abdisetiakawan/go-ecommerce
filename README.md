@@ -52,6 +52,14 @@ After the containers are up and running, execute the migration inside the runnin
 docker exec go-ecommerce make migrate
 ```
 
+### 4. Running Kafka Consumers
+
+Kafka consumers run as a separate process that listens for events and updates the database. Start them with:
+
+```sh
+go run cmd/consumer/main.go
+```
+
 ## Available Endpoints
 
 ### Authentication
@@ -90,7 +98,7 @@ docker exec go-ecommerce make migrate
 
 ## Kafka Integration
 
-The application utilizes Kafka for asynchronous processing of order-related tasks. This allows for better scalability and responsiveness, as order processing can occur in the background without blocking the main application flow.
+The application utilizes Kafka for asynchronous processing of order-related tasks. Kafka consumers run in a separate service, allowing them to listen for messages and handle background work without blocking the main API.
 
 ## Swagger Documentation
 
